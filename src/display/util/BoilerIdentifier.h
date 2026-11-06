@@ -156,11 +156,29 @@ class BoilerIdentifier {
         return out;
     }
 
-    // Whether the element is certainly saturated at this flow and temperature, with a margin so a sample sitting on
-    // the boundary -- where the duty is genuinely in doubt -- is left out rather than guessed at.
+    // Whether the flow alone exceeds what the element could hold at this temperature, with a margin so a sample
+    // sitting on the boundary is left out rather than guessed at. A statement about the flow, not about the element.
     static bool elementSaturated(const BoilerModelParams &params, float boilerC, float flowMlPerS, float marginFactor) {
         const float ceiling = boilerModelMaxSustainableFlow(params, boilerC);
         return ceiling > 0.0f && flowMlPerS > ceiling * marginFactor;
+    }
+
+    // Whether the duty over this sample is certainly 100 %, which is the only case the filter can learn from.
+    //
+    // Flow saturation alone is NOT enough, and assuming it was is what made the first run against real logs return a
+    // heat capacity half the true value. A boiler sitting above its setpoint has the element OFF whatever the flow is
+    // doing -- the PID is not asking for heat. Those logs turned out to be shots pulled from an over-temperature
+    // machine, starting at 104.7 °C against a 93 °C setpoint and cooling the whole way down; the filter was told the
+    // element was flat out for 43 samples where it was switched off, and the only way to explain a fall that fast with
+    // 900 W going in is a boiler with half the mass.
+    //
+    // So the temperature has to be below the setpoint by a margin as well. Both conditions, and the margin on each.
+    static bool dutyIsCertainlyFull(const BoilerModelParams &params, float boilerC, float setpointC, float flowMlPerS,
+                                    float marginFactor, float setpointMarginK) {
+        if (setpointC <= 0.0f || boilerC > setpointC - setpointMarginK) {
+            return false;
+        }
+        return elementSaturated(params, boilerC, flowMlPerS, marginFactor);
     }
 
   private:

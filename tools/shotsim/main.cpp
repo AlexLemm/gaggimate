@@ -47,6 +47,10 @@ struct Options {
     std::vector<std::string> logs;
 };
 
+// How far below its setpoint the boiler must sit before the element is taken to be certainly on. Covers the PID
+// easing off as it closes on the setpoint, and the temperature offset being slightly out.
+constexpr float SETPOINT_MARGIN_K = 2.0f;
+
 struct Shot {
     std::string name;
     std::string profile;
@@ -174,7 +178,11 @@ bool readShot(const std::string &path, const Options &opt, const BoilerModelPara
         sample.dtS = first ? header.sampleInterval / 1000.0f : (elapsed - previousMs) / 1000.0f;
         sample.measuredC = measuredC;
         sample.flowMlPerS = flow > 0.0f ? flow : 0.0f;
-        sample.dutyKnown = BoilerIdentifier::elementSaturated(prior, measuredC, sample.flowMlPerS, opt.saturationMargin);
+        // Both conditions: the flow must outrun the element AND the boiler must be below its setpoint, or the duty is
+        // not known to be 100 %. See BoilerIdentifier::dutyIsCertainlyFull -- leaving the second one out is what made
+        // the first run against real logs return half the true heat capacity.
+        sample.dutyKnown = BoilerIdentifier::dutyIsCertainlyFull(prior, measuredC, targetC, sample.flowMlPerS,
+                                                                 opt.saturationMargin, SETPOINT_MARGIN_K);
         sample.dutyFraction = sample.dutyKnown ? 1.0f : 0.0f;
 
         if (sample.dtS > 0.0f && sample.dtS < 5.0f) {
@@ -203,15 +211,33 @@ bool readShot(const std::string &path, const Options &opt, const BoilerModelPara
     return !out.samples.empty();
 }
 
+// Prints a shot, and -- when nothing in it was usable -- which of the two conditions ruled it out. Naming the right
+// one matters: a log whose flow never outran the element needs a different profile, while one that never got below its
+// setpoint needs a machine that was not already too hot. Blaming the flow for a setpoint problem sent the first real
+// run looking in entirely the wrong place, since the flow had peaked at 8 ml/s.
 void describe(const Shot &shot, const BoilerModelParams &params) {
     const float limit = boilerModelMaxSustainableFlow(params, shot.targetC > 0.0f ? shot.targetC : shot.startC);
-    std::printf("  %-28s %5.1f s  %5.1f ml  peak flow %4.2f ml/s  sag %4.2f C  %zu/%zu samples saturated\n",
-                shot.profile.empty() ? "(unnamed profile)" : shot.profile.c_str(), shot.durationS, shot.waterMl,
-                shot.peakFlow, shot.startC - shot.minC, shot.saturated, shot.samples.size());
-    if (shot.saturated == 0) {
-        std::printf("    nothing to learn from: the flow never passed %.2f ml/s, so the element was never certainly\n"
-                    "    flat out and the duty is unknown throughout. Pull a shot with a faster fill phase.\n",
+    std::printf("  %-20s %5.1f s %6.1f ml  peak %4.2f ml/s  %5.1f -> %5.1f C (target %5.1f)  %zu/%zu usable\n",
+                shot.profile.empty() ? "(unnamed)" : shot.profile.c_str(), shot.durationS, shot.waterMl, shot.peakFlow,
+                shot.startC, shot.minC, shot.targetC, shot.saturated, shot.samples.size());
+
+    if (shot.startC > shot.targetC + SETPOINT_MARGIN_K) {
+        std::printf("    started %.1f C above the setpoint, so most of that fall is the machine cooling back to it\n"
+                    "    rather than the water taking heat out.\n",
+                    shot.startC - shot.targetC);
+    }
+    if (shot.saturated > 0) {
+        return;
+    }
+    if (shot.peakFlow <= limit * 1.2f) {
+        std::printf("    nothing usable: the flow never passed %.2f ml/s, so the element was never certainly flat\n"
+                    "    out. Pull a shot with a faster fill phase.\n",
                     limit * 1.2f);
+    } else {
+        std::printf("    nothing usable: the flow was fast enough, but the boiler never got %.0f C below its\n"
+                    "    setpoint while it was, so the element may have been switched off throughout. Pull a shot\n"
+                    "    from a machine sitting at its setpoint rather than above it.\n",
+                    SETPOINT_MARGIN_K);
     }
 }
 
@@ -392,6 +418,28 @@ int main(int argc, char **argv) {
     if (worstRms > 0.5f) {
         std::printf("  Over 0.5 C out, which is more than the one-node model should be. Check --watts against a plug\n"
                     "  meter and --offset against the machine's setting before trusting the capacity.\n");
+    }
+
+    // Refuse to recommend a number the data did not establish. The whole reason for using a filter is that it reports
+    // how much each parameter was pinned down, and the one way to waste that is to print the estimate anyway.
+    //
+    // Two ways a fit can be worthless while still returning a number. The relative sigma says the data barely moved
+    // the parameter: 25 % is generous, since a capacity known to a quarter is enough to set a bank to within half a
+    // degree and no better. And an estimate resting on a clamp means the filter wanted to go further than any boiler
+    // can, so the clamp -- not the data -- is what produced the figure.
+    const float relativeSigma =
+        fit.params.capacityJPerK > 0.0f ? fit.capacitySigma / fit.params.capacityJPerK : 1.0f;
+    const bool atClamp = fit.params.capacityJPerK >= 19999.0f || fit.params.capacityJPerK <= 501.0f;
+    if (relativeSigma > 0.25f || atClamp) {
+        std::printf("\nNot identified. The heat capacity came back as %.0f +- %.0f J/K (%.0f %%)%s, which is not a\n"
+                    "measurement -- only %zu samples had a duty the filter could trust, out of %zu.\n",
+                    fit.params.capacityJPerK, fit.capacitySigma, relativeSigma * 100.0f,
+                    atClamp ? " and is resting on a clamp" : "", fit.samplesLearned, fit.samplesSeen);
+        std::printf("Leave the Experimental tab's Boiler Heat Capacity where it is and pull logs that can settle it:\n"
+                    "a shot started with the machine AT its brew setpoint, not above it, with a fill phase fast\n"
+                    "enough to outrun the element (over about %.1f ml/s).\n",
+                    boilerModelMaxSustainableFlow(prior, shots.front().targetC) * 1.2f);
+        return 3;
     }
 
     recommend(shots, fit.params, opt);
