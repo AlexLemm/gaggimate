@@ -4,7 +4,7 @@ import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 import { FeatureStatus } from './experimental/FeatureStatus.jsx';
 import { ModelTraceChart } from './experimental/ModelTraceChart.jsx';
 import { PowerPanel } from './experimental/PowerPanel.jsx';
-import { BLOCKER, featureState, heaterWattsFromPid, num, thermalBlocker } from './experimental/thermalModel.js';
+import { BLOCKER, featureState, heaterWatts, num, thermalBlocker } from './experimental/thermalModel.js';
 
 // Settings that change how the machine heats, kept apart from Machine so they are not adjusted in passing. Each one
 // here is reversible from this page alone: setting a cap back to 0 restores the previous behaviour exactly.
@@ -20,7 +20,7 @@ import { BLOCKER, featureState, heaterWattsFromPid, num, thermalBlocker } from '
 export function ExperimentalTab({ formData, onChange }) {
   const { t } = useLingui();
 
-  const watts = heaterWattsFromPid(formData.pid);
+  const watts = heaterWatts(formData);
   const capacity = num(formData.boilerHeatCapacity);
   const bank = num(formData.maxThermalBank);
   const recovery = num(formData.maxThermalRecovery);

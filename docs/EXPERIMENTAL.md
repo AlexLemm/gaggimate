@@ -122,9 +122,20 @@ If the first mouthful tastes hot, lower the cap or raise the heat capacity — a
 
 ### Watch the ceiling
 
-The 100 °C boiler ceiling bounds the **real** boiler temperature, offset included. With a 93 °C profile and a 5 °C
-temperature offset the boiler already sits at 98 °C, leaving room for 2 °C and no more. Asking for 3 would be silently
-clipped to 2.
+The 100 °C boiler ceiling bounds the **real** boiler temperature, temperature offset included, because past
+atmospheric boiling the boiler makes steam rather than storing heat.
+
+How much room that leaves depends entirely on your offset, and it is worth knowing which case you are in:
+
+- **Offset 0** — the displayed temperature *is* the boiler temperature. A 93 °C profile leaves 7 °C of headroom, so
+  the 5 °C caps on the bank and the recovery bind long before the ceiling does. This is the simpler arrangement, and
+  it is why the offset is worth setting to 0 and working from real values.
+- **A non-zero offset** — the boiler sits that much hotter than the UI shows, and the headroom shrinks by the same
+  amount. With a 5 °C offset the same 93 °C profile already has the boiler at 98 °C, leaving room for 2 °C and no
+  more; asking for 3 is silently clipped to 2.
+
+Nothing warns you when the ceiling clips a cap, so check the arithmetic rather than assuming the number you typed is
+the number in force.
 
 ## Measuring your machine instead of guessing: `tools/shotsim`
 

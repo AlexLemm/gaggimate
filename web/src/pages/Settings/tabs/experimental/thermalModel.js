@@ -6,11 +6,17 @@ export const num = value => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-// Kff is the fourth PID coefficient, "Kp,Ki,Kd,Kff" on the Machine tab. Every thermal feature derives the element
-// wattage from it (watts = 1000 / Kff) rather than from a field of its own, so there is one number to get right.
-// A zero means none of them can know how much power a shot has available.
-export const heaterWattsFromPid = pid => {
-  const kff = num(String(pid ?? '').split(',')[3]);
+// Every thermal feature derives the element wattage from the feedforward gain, Kff, as 1000 divided by it, rather
+// than from a field of its own -- one number to get right, and no way for them to disagree about it. A zero means
+// none of them can know how much power a shot has available.
+//
+// Takes the whole form rather than a pid string, because the Settings page does not keep one.
+// transformFetchedSettings splits the stored "Kp,Ki,Kd,Kff" into `pid`, holding the first three, and `kf` holding the
+// gain, then rejoins them on save. Reading a fourth part of `pid` therefore finds nothing and silently reports a
+// machine with no element -- which is how the status panel came to say "set Kff" on a machine whose Kff was 1.111,
+// while the power readout beside it was correctly showing 904 W from the same settings.
+export const heaterWatts = formData => {
+  const kff = num(formData?.kf ?? String(formData?.pid ?? '').split(',')[3]);
   return kff > 0 ? 1000 / kff : 0;
 };
 
@@ -25,7 +31,7 @@ export const heaterWattsFromPid = pid => {
 export const BLOCKER = { NEEDS_KFF: 'needs-kff', NEEDS_CAPACITY: 'needs-capacity' };
 
 export const thermalBlocker = formData => {
-  if (heaterWattsFromPid(formData.pid) <= 0) {
+  if (heaterWatts(formData) <= 0) {
     return BLOCKER.NEEDS_KFF;
   }
   if (num(formData.boilerHeatCapacity) <= 0) {
