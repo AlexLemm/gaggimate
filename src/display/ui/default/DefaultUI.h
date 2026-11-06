@@ -84,6 +84,7 @@ class DefaultUI {
   private:
     void setupPanel();
     void setupState();
+    void updateTankLevel();
 
     void handleScreenChange();
 
@@ -203,6 +204,8 @@ class DefaultUI {
 
     int mode = MODE_STANDBY;
     bool pressureAvailable = false;
+    lv_obj_t *tankLevelLabel = nullptr;
+    int shownTankLevel = -1;
     int heatingFlash = 0;
     float pressure = 0.0f;
     float currentTemp = 0.0f;

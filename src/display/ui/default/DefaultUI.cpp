@@ -394,6 +394,7 @@ void DefaultUI::loop() {
 
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
+        updateTankLevel();
         updateProfilePreview();
         effect_mgr.evaluate_all();
 
@@ -618,6 +619,37 @@ void DefaultUI::setupState() {
                               // positionMenuIcon(objects.btn_settings_1, step * (3 + iconOffset) - rotationOffset, radius);
                           },
                           &grindAvailable);
+}
+
+// Alba tank level under the temperature and pressure on the brew screen. It sits on the top layer because EEZ creates
+// and deletes screens on demand, which would leave a pointer to a child of the screen dangling.
+void DefaultUI::updateTankLevel() {
+    const ::Settings &settings = controller->getSettings();
+    const bool calibrated = settings.getFullTankDistance() > 0 && settings.getEmptyTankDistance() > settings.getFullTankDistance();
+    // A distance of 0 means no reading has arrived yet, which would otherwise read as a full tank.
+    const bool visible = currentScreen == SCREEN_ID_BREW_SCREEN && !brewConfirmVisible &&
+                         controller->getSystemInfo().capabilities.tof && calibrated && controller->getTofDistance() > 0;
+    if (!visible) {
+        if (tankLevelLabel != nullptr) {
+            lv_obj_add_flag(tankLevelLabel, LV_OBJ_FLAG_HIDDEN);
+        }
+        return;
+    }
+    if (tankLevelLabel == nullptr) {
+        tankLevelLabel = lv_label_create(lv_layer_top());
+        lv_obj_set_style_text_font(tankLevelLabel, &lv_font_montserrat_18, LV_PART_MAIN);
+        lv_obj_align(tankLevelLabel, LV_ALIGN_TOP_MID, 0, 56);
+    }
+    lv_obj_clear_flag(tankLevelLabel, LV_OBJ_FLAG_HIDDEN);
+    if (objects.brew_dials__pressure_text != nullptr) { // follows the active theme
+        lv_obj_set_style_text_color(tankLevelLabel, lv_obj_get_style_text_color(objects.brew_dials__pressure_text, LV_PART_MAIN),
+                                    LV_PART_MAIN);
+    }
+    const int level = controller->getWaterLevel();
+    if (level != shownTankLevel) {
+        shownTankLevel = level;
+        lv_label_set_text_fmt(tankLevelLabel, "%d%%", level);
+    }
 }
 
 void DefaultUI::handleScreenChange() {
