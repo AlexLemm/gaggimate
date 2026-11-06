@@ -14,6 +14,8 @@ src/display/ui/default/lvgl/project.info
 src/display/webassets/
 # Desktop simulator runtime data (settings/profiles/shots) and screenshots
 sim_data/
+# Design notes from the simulator and web dev server (right-click)
+annotations/
 *.bmp
 
 # Local release staging (scripts/release.sh)

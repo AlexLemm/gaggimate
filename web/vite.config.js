@@ -3,6 +3,7 @@ import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
 import { lingui } from '@lingui/vite-plugin';
 import { execSync } from 'node:child_process';
+import annotatePlugin from './dev/annotatePlugin.js';
 
 // Same version string as the firmware, so an app web bundle maps to a firmware build.
 function bundleVersion() {
@@ -21,6 +22,7 @@ export default defineConfig(({ mode }) => ({
     preact({ babel: { plugins: ['@lingui/babel-plugin-lingui-macro'] } }),
     lingui(),
     tailwindcss(),
+    annotatePlugin(),
     // The native app draws edge-to-edge (layout pads with env(safe-area-inset-*)) and, like a native app, never zooms.
     mode === 'app' && {
       name: 'app-viewport',

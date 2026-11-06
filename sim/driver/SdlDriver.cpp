@@ -1,5 +1,7 @@
 #include "SdlDriver.h"
 
+#include "Annotator.h"
+
 #include <SDL.h>
 #include <cstdlib>
 #include <display/main.h>
@@ -39,6 +41,17 @@ static void mouse_read(lv_indev_drv_t *drv, lv_indev_data_t *data) {
     data->point.x = s_mouseX;
     data->point.y = s_mouseY;
     data->state = s_mousePressed ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+}
+
+// The frame as it looks on screen, round mask included, for annotation screenshots.
+static std::vector<uint8_t> readFrameRGB24() {
+    std::vector<uint8_t> rgb(static_cast<size_t>(DISP_W) * DISP_H * 3);
+    SDL_SetRenderDrawColor(s_renderer, BEZEL_R, BEZEL_G, BEZEL_B, 0xFF);
+    SDL_RenderClear(s_renderer);
+    SDL_RenderCopy(s_renderer, s_texture, nullptr, nullptr);
+    SDL_RenderCopy(s_renderer, s_mask, nullptr, nullptr);
+    SDL_RenderReadPixels(s_renderer, nullptr, SDL_PIXELFORMAT_RGB24, rgb.data(), DISP_W * 3);
+    return rgb;
 }
 
 void SdlDriver::init() {
@@ -91,6 +104,8 @@ void SdlDriver::init() {
 void SdlDriver::pumpAndRender() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+        if (Annotator::handleEvent(e))
+            continue;
         switch (e.type) {
         case SDL_QUIT:
             s_quit = true;
@@ -104,6 +119,8 @@ void SdlDriver::pumpAndRender() {
                 s_mousePressed = true;
                 s_mouseX = e.button.x;
                 s_mouseY = e.button.y;
+            } else if (e.button.button == SDL_BUTTON_RIGHT && !Annotator::isOpen()) {
+                Annotator::open(e.button.x, e.button.y, readFrameRGB24(), DISP_W, DISP_H);
             }
             break;
         case SDL_MOUSEBUTTONUP:

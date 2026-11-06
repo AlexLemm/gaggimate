@@ -56,6 +56,18 @@ IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
 - **State** (settings, profiles, shot history) persists under `sim_data/`
   (git-ignored). Delete it to start fresh.
 
+## Design notes (right-click)
+
+`scripts/dev.sh` rebuilds and starts the simulator plus the live web UI at
+<http://localhost:5173/>. Right-click the touchscreen window or that page, type what
+it should do, and press Enter (Shift+Enter for a new line, Esc to cancel; in the
+browser, Shift+right-click keeps the normal menu).
+
+Notes collect in `annotations/ANNOTATIONS.md` (git-ignored) with the screen, nearby
+text, machine state and, for the touchscreen, a marked screenshot in
+`annotations/shots/`. This is development-only: it is compiled from `sim/` and the
+Vite dev server, so it never reaches a device build.
+
 ## 3. How it works
 
 Everything simulator-only lives here in `sim/`; the firmware in `src/` is built
