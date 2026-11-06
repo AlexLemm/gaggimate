@@ -25,6 +25,23 @@
 #define DEFAULT_HEATER_HANDOVER_MS 50
 #define MIN_HEATER_HANDOVER_MS 20
 #define MAX_HEATER_HANDOVER_MS 5000
+// Pre-shot thermal banking (src/display/util/ThermalBank.h). Off by default: the bank cap is what turns it on, so a
+// stale boiler-heat-capacity figure cannot change behaviour until the user opts in.
+#define DEFAULT_MAX_THERMAL_BANK 0.0f
+#define MAX_THERMAL_BANK_LIMIT 5.0f
+#define DEFAULT_INLET_WATER_TEMP 21
+// Boiler, group and water, in J/K. Deliberately on the high side: a larger capacity yields a smaller offset, and
+// over-banking overshoots the brew temperature. A Silvia's own shot logs measure about 3300.
+#define DEFAULT_BOILER_HEAT_CAPACITY 3500
+// Parking-temperature ceiling; keeps the bank clear of boiling whatever the deficit asks for.
+#define THERMAL_BANK_CEILING_C 98.0f
+// Flow a puck passes once it is up to brewing pressure, for pressure-targeted phases the profile cannot predict.
+#define THERMAL_BANK_ASSUMED_PUCK_FLOW 2.0f
+// Target pressure at which the puck, rather than the pump, becomes the restriction. Below it a pressure-targeted phase
+// is really a fill or preinfusion phase running at close to the pump's capability.
+#define THERMAL_BANK_PUCK_LIMITED_PRESSURE 4.0f
+// Free flow assumed at 100 % for a simple on/off pump, which reports no flow at all.
+#define THERMAL_BANK_SIMPLE_PUMP_FLOW 5.0f
 #define DEFAULT_PUMP_MODEL_COEFFS "10.205,5.521"
 #define DEFAULT_PUMP_SLIP_COEFFS "0,0,0,0"
 #define DEFAULT_MDNS_NAME "gaggimate"

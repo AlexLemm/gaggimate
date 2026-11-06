@@ -58,6 +58,9 @@ class Controller {
 
     float getTargetTemp() const;
     float getTargetSteamTemp() const;
+    // Degrees above the brew setpoint to park the boiler at while it waits for the selected profile's shot, so the
+    // high-flow phases spend stored energy instead of sagging. 0 whenever banking does not apply.
+    float getThermalBankOffset() const;
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
     virtual float getCurrentSteamTemp() const { return currentSteamTemp; }

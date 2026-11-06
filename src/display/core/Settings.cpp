@@ -98,6 +98,17 @@ void Settings::setTargetWaterTemp(const int target_water_temp) { targetWaterTemp
 
 void Settings::setTemperatureOffset(const int temperature_offset) { temperatureOffset.set(temperature_offset); }
 
+void Settings::setMaxThermalBank(const float max_thermal_bank) {
+    maxThermalBank.set(std::clamp(max_thermal_bank, 0.0f, MAX_THERMAL_BANK_LIMIT));
+}
+
+void Settings::setInletWaterTemp(const int inlet_water_temp) { inletWaterTemp.set(std::clamp(inlet_water_temp, 0, 60)); }
+
+// 0 disables banking rather than dividing by zero; see planThermalBank.
+void Settings::setBoilerHeatCapacity(const int boiler_heat_capacity) {
+    boilerHeatCapacity.set(std::max(0, boiler_heat_capacity));
+}
+
 void Settings::setPressureOffset(const float pressure_offset) { pressureOffset.set(pressure_offset); }
 
 void Settings::setPressureScaling(const float pressure_scaling) { pressureScaling.set(pressure_scaling); }

@@ -82,6 +82,9 @@ class Settings {
     int getTargetSteamTemp() const { return targetSteamTemp.get(); }
     int getTargetWaterTemp() const { return targetWaterTemp.get(); }
     int getTemperatureOffset() const { return temperatureOffset.get(); }
+    float getMaxThermalBank() const { return maxThermalBank.get(); }
+    int getInletWaterTemp() const { return inletWaterTemp.get(); }
+    int getBoilerHeatCapacity() const { return boilerHeatCapacity.get(); }
     float getPressureOffset() const { return pressureOffset.get(); }
     float getPressureScaling() const { return pressureScaling.get(); }
     float getScaleFactor1() const { return scaleFactor1.get(); }
@@ -199,6 +202,9 @@ class Settings {
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
+    void setMaxThermalBank(float max_thermal_bank);
+    void setInletWaterTemp(int inlet_water_temp);
+    void setBoilerHeatCapacity(int boiler_heat_capacity);
     void setPressureOffset(float pressure_offset);
     void setPressureScaling(float pressure_scaling);
     void setScaleFactors(float scale_factor_1, float scale_factor_2);
@@ -309,6 +315,9 @@ class Settings {
     Property<int> targetSteamTemp{registry, "ts", 145};
     Property<int> targetWaterTemp{registry, "tw", 80};
     Property<int> temperatureOffset{registry, "to", DEFAULT_TEMPERATURE_OFFSET};
+    Property<float> maxThermalBank{registry, "tb_max", DEFAULT_MAX_THERMAL_BANK};
+    Property<int> inletWaterTemp{registry, "tb_in", DEFAULT_INLET_WATER_TEMP};
+    Property<int> boilerHeatCapacity{registry, "tb_cap", DEFAULT_BOILER_HEAT_CAPACITY};
     Property<float> pressureOffset{registry, "poff", DEFAULT_PRESSURE_OFFSET};
     Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
     Property<float> scaleFactor1{registry, "sf1", 0.0f};

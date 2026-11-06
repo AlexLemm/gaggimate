@@ -348,6 +348,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setTargetWaterTemp(request->arg("targetWaterTemp").toInt());
             if (request->hasArg("temperatureOffset"))
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
+            if (request->hasArg("maxThermalBank"))
+                settings->setMaxThermalBank(request->arg("maxThermalBank").toFloat());
+            if (request->hasArg("inletWaterTemp"))
+                settings->setInletWaterTemp(request->arg("inletWaterTemp").toInt());
+            if (request->hasArg("boilerHeatCapacity"))
+                settings->setBoilerHeatCapacity(request->arg("boilerHeatCapacity").toInt());
             if (request->hasArg("pressureOffset"))
                 settings->setPressureOffset(request->arg("pressureOffset").toFloat());
             if (request->hasArg("pressureScaling"))
@@ -587,6 +593,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["apPassword"] = settings.getWifiApPassword();
     doc["mdnsName"] = settings.getMdnsName();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
+    doc["maxThermalBank"] = String(settings.getMaxThermalBank());
+    doc["inletWaterTemp"] = String(settings.getInletWaterTemp());
+    doc["boilerHeatCapacity"] = String(settings.getBoilerHeatCapacity());
     doc["pressureOffset"] = String(settings.getPressureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
     doc["scaleFactor1"] = settings.getScaleFactor1();

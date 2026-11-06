@@ -24,6 +24,7 @@
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mahlkonig/MahlkonigPlugin.h>
 #include <display/util/FsUtil.h>
+#include <display/util/ThermalBank.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -846,6 +847,98 @@ float Controller::getTargetSteamTemp() const {
     return 0.0f;
 }
 
+// Water the pump is expected to move during a phase.
+//
+// A flow-targeted phase states it outright. A pressure-targeted phase does not, because the puck sets the flow, so it
+// has to be estimated from the pump's own capability at that pressure (the affine model from
+// PressureController::setPumpFlowCoeff) and from what a puck will pass. Which of the two binds depends on the target:
+// below brewing pressure there is nothing restricting the water yet, so the pump runs near its capability — a shot log
+// from a 0.2 bar fill phase shows 9.85 ml/s against a 9.4 ml/s predicted capability. Once the puck is up to brewing
+// pressure it, not the pump, is the restriction: the same machine measures ~1.3 ml/s at 9 bar where the pump could
+// still deliver 3.3.
+//
+// Getting the low-pressure end right is what matters, since that is where the flow outruns the element.
+static float plannedPhaseFlow(const Phase &phase, float oneBarFlow, float nineBarFlow) {
+    if (phase.pumpIsSimple) {
+        if (phase.pumpSimple <= 0) {
+            return 0.0f;
+        }
+        return THERMAL_BANK_SIMPLE_PUMP_FLOW * static_cast<float>(phase.pumpSimple) / 100.0f;
+    }
+    if (phase.pumpAdvanced.target == PumpTarget::PUMP_TARGET_FLOW) {
+        return std::max(0.0f, phase.pumpAdvanced.flow);
+    }
+    const float pressure = phase.pumpAdvanced.pressure;
+    if (pressure <= 0.0f) {
+        return 0.0f;
+    }
+
+    float capability = THERMAL_BANK_ASSUMED_PUCK_FLOW;
+    if (oneBarFlow > 0.0f && nineBarFlow > 0.0f) {
+        const float slope = (nineBarFlow - oneBarFlow) / 8.0f;
+        capability = std::max(0.0f, slope * pressure + (oneBarFlow - slope));
+    }
+    if (pressure < THERMAL_BANK_PUCK_LIMITED_PRESSURE) {
+        return capability;
+    }
+    return std::min(capability, THERMAL_BANK_ASSUMED_PUCK_FLOW);
+}
+
+float Controller::getThermalBankOffset() const {
+    const float maxBank = settings.getMaxThermalBank();
+    if (maxBank <= 0.0f || mode != MODE_BREW) {
+        return 0.0f;
+    }
+    {
+        // Release the bank the instant the shot starts: spending the stored energy is the whole point, and the profile's
+        // own setpoint must own the temperature from then on.
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        if (isActiveLocked()) {
+            return 0.0f;
+        }
+    }
+
+    const Profile &profile = profileManager->getSelectedProfile();
+    // Backflush and descale move far more water than any bank can cover, and their temperature does not matter.
+    if (profile.utility || profile.phases.empty() || profile.temperature <= 0.0f) {
+        return 0.0f;
+    }
+
+    // The element rating lives in the feedforward gain (Kff = 1000 / watts), set by autotune or by hand. Without it
+    // there is no way to know how much power the shot has available, so there is nothing to bank.
+    float pid[4];
+    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    if (pid[3] <= 0.0f) {
+        return 0.0f;
+    }
+    constexpr float HEATER_OUTPUT_SPAN = 1000.0f; // Heater::TUNER_OUTPUT_SPAN on the controller
+
+    float pumpCoeffs[2];
+    parseFloatCsv(settings.getPumpModelCoeffs(), pumpCoeffs, 2, 0.0f);
+
+    constexpr size_t MAX_PHASES = 24;
+    ThermalBankPhase phases[MAX_PHASES];
+    size_t count = 0;
+    for (const auto &phase : profile.phases) {
+        if (count >= MAX_PHASES) {
+            break;
+        }
+        phases[count].durationS = phase.duration;
+        phases[count].flowMlPerS = plannedPhaseFlow(phase, pumpCoeffs[0], pumpCoeffs[1]);
+        count++;
+    }
+
+    ThermalBankParams params;
+    params.setpointC = profile.temperature;
+    params.inletC = static_cast<float>(settings.getInletWaterTemp());
+    params.heaterWatts = HEATER_OUTPUT_SPAN / pid[3];
+    params.boilerCapacityJPerK = static_cast<float>(settings.getBoilerHeatCapacity());
+    params.maxBankK = maxBank;
+    params.ceilingC = THERMAL_BANK_CEILING_C;
+
+    return planThermalBank(phases, count, params).bankK;
+}
+
 void Controller::setTargetTemp(float temperature) {
     pluginManager->trigger("boiler:targetTemperature:change", "value", temperature);
     switch (mode) {
@@ -1019,6 +1112,8 @@ void Controller::updateControl() {
 
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
+        // Park the boiler above the setpoint while it waits, so the shot's high-flow phases draw on stored energy.
+        targetTemp = targetTemp + getThermalBankOffset();
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
 

@@ -171,6 +171,65 @@ export function MachineTab({ formData, onChange, setField }) {
               onChange={onChange('kf')}
             />
           </InputGroupField>
+          <InputGroupField
+            label={t`Pre-Shot Thermal Bank`}
+            htmlFor='maxThermalBank'
+            unit='°C'
+            helpText={t`Parks the boiler this far above the brew setpoint while it waits, so high-flow phases spend stored energy instead of dropping. 0 disables it. Needs the feedforward gain set, which is where the element wattage comes from.`}
+            noMargin
+          >
+            <input
+              id='maxThermalBank'
+              name='maxThermalBank'
+              type='number'
+              step='0.1'
+              min='0'
+              max='5'
+              className='grow'
+              placeholder='0.0'
+              value={formData.maxThermalBank}
+              onChange={onChange('maxThermalBank')}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label={t`Inlet Water Temperature`}
+            htmlFor='inletWaterTemp'
+            unit='°C'
+            helpText={t`Temperature of the water in the tank. Used to work out how much heat the incoming water takes.`}
+            noMargin
+          >
+            <input
+              id='inletWaterTemp'
+              name='inletWaterTemp'
+              type='number'
+              step='1'
+              min='0'
+              max='60'
+              className='grow'
+              placeholder='21'
+              value={formData.inletWaterTemp}
+              onChange={onChange('inletWaterTemp')}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label={t`Boiler Heat Capacity`}
+            htmlFor='boilerHeatCapacity'
+            unit='J/K'
+            helpText={t`Heat capacity of boiler, group and water. Larger values bank less. Raise it if the first mouthful tastes hot.`}
+            noMargin
+          >
+            <input
+              id='boilerHeatCapacity'
+              name='boilerHeatCapacity'
+              type='number'
+              step='100'
+              min='0'
+              className='grow'
+              placeholder='3500'
+              value={formData.boilerHeatCapacity}
+              onChange={onChange('boilerHeatCapacity')}
+            />
+          </InputGroupField>
           <SettingsFormField
             label={t`Pump Flow Coefficients`}
             htmlFor='pumpModelCoeffs'
