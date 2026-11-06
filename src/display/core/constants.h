@@ -33,8 +33,11 @@
 // Boiler, group and water, in J/K. Deliberately on the high side: a larger capacity yields a smaller offset, and
 // over-banking overshoots the brew temperature. A Silvia's own shot logs measure about 3300.
 #define DEFAULT_BOILER_HEAT_CAPACITY 3500
-// Parking-temperature ceiling; keeps the bank clear of boiling whatever the deficit asks for.
-#define THERMAL_BANK_CEILING_C 98.0f
+// Ceiling on the *boiler* temperature while it waits, temperature offset included, whatever the deficit asks for.
+// Atmospheric boiling point: the brew boiler is not deliberately pressurised at idle, so past this it can make steam
+// rather than store heat. The user's bank cap is the bound that normally applies; this one only catches a machine
+// already running close to it, such as a 93 C profile with a 5 C offset, which leaves room for 2 C and no more.
+#define THERMAL_BANK_CEILING_C 100.0f
 // Flow a puck passes once it is up to brewing pressure, for pressure-targeted phases the profile cannot predict.
 #define THERMAL_BANK_ASSUMED_PUCK_FLOW 2.0f
 // Target pressure at which the puck, rather than the pump, becomes the restriction. Below it a pressure-targeted phase

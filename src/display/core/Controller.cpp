@@ -929,7 +929,12 @@ float Controller::getThermalBankOffset() const {
     }
 
     ThermalBankParams params;
-    params.setpointC = profile.temperature;
+    // The boiler setpoint, not the brew temperature the profile names: sendControllerUpdate adds the temperature
+    // offset on the way out and onTempRead subtracts it again on the way back, so the boiler physically sits that
+    // much hotter than the UI shows. The water leaving it is heated to the real temperature, which is the enthalpy
+    // rise the element has to supply, and the ceiling has to bound the real temperature too -- otherwise a 93 C
+    // profile with a 5 C offset and a 2 C bank asks the boiler for 100 C.
+    params.setpointC = profile.temperature + static_cast<float>(settings.getTemperatureOffset());
     params.inletC = static_cast<float>(settings.getInletWaterTemp());
     params.heaterWatts = HEATER_OUTPUT_SPAN / pid[3];
     params.boilerCapacityJPerK = static_cast<float>(settings.getBoilerHeatCapacity());
