@@ -102,6 +102,14 @@ void Settings::setMaxThermalBank(const float max_thermal_bank) {
     maxThermalBank.set(std::clamp(max_thermal_bank, 0.0f, MAX_THERMAL_BANK_LIMIT));
 }
 
+void Settings::setMaxThermalRecovery(const float max_thermal_recovery) {
+    maxThermalRecovery.set(std::clamp(max_thermal_recovery, 0.0f, MAX_THERMAL_RECOVERY_LIMIT));
+}
+
+void Settings::setPumpRatedWatts(const float pump_rated_watts) {
+    pumpRatedWatts.set(std::clamp(pump_rated_watts, 0.0f, MAX_PUMP_RATED_WATTS));
+}
+
 void Settings::setInletWaterTemp(const int inlet_water_temp) { inletWaterTemp.set(std::clamp(inlet_water_temp, 0, 60)); }
 
 // 0 disables banking rather than dividing by zero; see planThermalBank.

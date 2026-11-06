@@ -462,6 +462,16 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
     statusDoc["pw"] = controller->getCurrentPumpPower();
     statusDoc["hp"] = round_to(controller->getCurrentHeaterPower(), 3);
+    // Experimental observers: the live boiler model beside the measurement, and the estimated draw. Fast-path fields
+    // so the dashboard can plot them against ct on one time axis.
+    statusDoc["mt"] = round_to(controller->getModelTemp(), 3);          // model sensor temperature
+    statusDoc["mbt"] = round_to(controller->getModelBoilerTemp(), 3);   // model water temperature, unmeasurable
+    statusDoc["mnp"] = round_to(controller->getModelNetPower(), 1);     // net power into the boiler, W
+    statusDoc["ew"] = round_to(controller->getEstimatedPower(), 1);     // estimated draw from the wall, W
+    statusDoc["ewh"] = round_to(controller->getEstimatedEnergyWh(), 4); // energy since boot, Wh
+    statusDoc["trd"] = round_to(controller->getThermalRecoveryDebt(), 1);   // outstanding recovery debt, J
+    statusDoc["tro"] = round_to(controller->getThermalRecoveryOffset(), 3); // offset recovery is asking for, C
+    statusDoc["tbo"] = round_to(controller->getThermalBankOffset(), 3);     // offset banking is asking for, C
     if (controller->getClientController()->getClient()->isConnected()) {
         statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
     }

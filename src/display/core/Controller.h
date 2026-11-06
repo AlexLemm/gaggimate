@@ -10,6 +10,9 @@
 #include <display/core/ButtonHandler.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
+#include <display/util/BoilerObserver.h>
+#include <display/util/PowerEstimate.h>
+#include <display/util/ThermalRecovery.h>
 #include <display/core/process/Process.h>
 #include <mutex>
 #include <vector>
@@ -61,6 +64,24 @@ class Controller {
     // Degrees above the brew setpoint to park the boiler at while it waits for the selected profile's shot, so the
     // high-flow phases spend stored energy instead of sagging. 0 whenever banking does not apply.
     float getThermalBankOffset() const;
+    // Degrees above the setpoint recovery is currently asking for, to pay back the energy the shot measurably removed.
+    // Updated by updateControl(); this getter only reports it.
+    // 0 once the debt is settled. getThermalRecoveryDebt() is the outstanding debt in J, for the UI and the shot log.
+    float getThermalRecoveryOffset() const { return thermalRecoveryOffset; }
+    float getThermalRecoveryDebt() const { return thermalRecovery.debtJ(); }
+
+    // Live model running beside the real boiler (src/display/util/BoilerObserver.h). Read-only: nothing here drives
+    // the machine, it only gives the dashboard something to draw the measurement against.
+    float getModelTemp() const { return boilerObserver.isRunning() ? boilerObserver.predictedC() : 0.0f; }
+    float getModelBoilerTemp() const { return boilerObserver.isRunning() ? boilerObserver.predictedBoilerC() : 0.0f; }
+    float getModelErrorTemp() const { return boilerObserver.errorC(); }
+    float getModelNetPower() const { return boilerObserver.netPowerW(); }
+
+    // Estimated draw from the wall (src/display/util/PowerEstimate.h), and the energy since boot.
+    float getEstimatedPower() const { return powerEstimate.totalW; }
+    float getEstimatedHeaterPower() const { return powerEstimate.heaterW; }
+    float getEstimatedPumpPower() const { return powerEstimate.pumpW; }
+    float getEstimatedEnergyWh() const { return powerAccumulator.energyWh(); }
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
     virtual float getCurrentSteamTemp() const { return currentSteamTemp; }
@@ -240,6 +261,25 @@ class Controller {
     float currentWaterPumped = 0.0f;
     float targetFlow = 0.0f;
     int tofDistance = 0;
+
+    // Measured energy balance over the boiler; see src/display/util/ThermalRecovery.h. Touched only from
+    // updateControl() under processMutex, so it needs no synchronisation of its own.
+    ThermalRecovery thermalRecovery;
+    unsigned long lastObserverSampleAt = 0;
+    float thermalRecoveryOffset = 0.0f;
+
+    // Folds one interval into the energy balance and returns the offset it now asks for. realSetpointC is the boiler
+    // setpoint being commanded, temperature offset included.
+    float updateThermalRecovery(float dtS, float realSetpointC);
+
+    // Steps the live boiler model and the power estimate. Both are observers: they read telemetry and settings and
+    // write nothing the machine acts on, so they are kept apart from the compensation path above.
+    void updateObservers(float dtS);
+    BoilerModelParams modelParams() const;
+
+    BoilerObserver boilerObserver;
+    PowerEstimate powerEstimate;
+    PowerAccumulator powerAccumulator;
 
     SystemInfo systemInfo{};
 

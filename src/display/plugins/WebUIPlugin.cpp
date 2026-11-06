@@ -350,6 +350,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
             if (request->hasArg("maxThermalBank"))
                 settings->setMaxThermalBank(request->arg("maxThermalBank").toFloat());
+            if (request->hasArg("maxThermalRecovery"))
+                settings->setMaxThermalRecovery(request->arg("maxThermalRecovery").toFloat());
+            if (request->hasArg("pumpRatedWatts"))
+                settings->setPumpRatedWatts(request->arg("pumpRatedWatts").toFloat());
             if (request->hasArg("inletWaterTemp"))
                 settings->setInletWaterTemp(request->arg("inletWaterTemp").toInt());
             if (request->hasArg("boilerHeatCapacity"))
@@ -594,6 +598,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["mdnsName"] = settings.getMdnsName();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["maxThermalBank"] = String(settings.getMaxThermalBank());
+    doc["maxThermalRecovery"] = String(settings.getMaxThermalRecovery());
+    doc["pumpRatedWatts"] = String(settings.getPumpRatedWatts());
     doc["inletWaterTemp"] = String(settings.getInletWaterTemp());
     doc["boilerHeatCapacity"] = String(settings.getBoilerHeatCapacity());
     doc["pressureOffset"] = String(settings.getPressureOffset());

@@ -25,6 +25,7 @@
 #include <display/plugins/mahlkonig/MahlkonigPlugin.h>
 #include <display/util/FsUtil.h>
 #include <display/util/ThermalBank.h>
+#include <display/util/ThermalRecovery.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -944,6 +945,97 @@ float Controller::getThermalBankOffset() const {
     return planThermalBank(phases, count, params).bankK;
 }
 
+// Longest interval the held telemetry is trusted to describe. The sensor frame arrives every 100 ms and updateControl
+// runs on the main loop, so a healthy machine samples far inside this.
+static constexpr float RECOVERY_MAX_SAMPLE_GAP_S = 2.0f;
+
+// Folds the latest telemetry into the boiler's energy balance and returns the offset the outstanding debt asks for.
+//
+// Runs only in brew mode, including utility profiles: a flush removes more energy than any shot and recovering from it
+// is exactly as useful. Steam and hot water are left out deliberately -- their setpoints are their own, and a debt
+// measured against one of them has no meaning for the next shot.
+float Controller::updateThermalRecovery(const float dtS, const float realSetpointC) {
+    const float maxBoost = settings.getMaxThermalRecovery();
+
+    if (maxBoost <= 0.0f || mode != MODE_BREW || !comms.isConnected() || realSetpointC <= 0.0f) {
+        thermalRecovery.reset();
+        return 0.0f;
+    }
+
+    // The element rating lives in the feedforward gain (Kff = 1000 / watts), as it does for banking: without it there
+    // is no repayment term and the balance cannot be closed.
+    float pid[4];
+    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    if (pid[3] <= 0.0f) {
+        thermalRecovery.reset();
+        return 0.0f;
+    }
+    constexpr float HEATER_OUTPUT_SPAN = 1000.0f; // Heater::TUNER_OUTPUT_SPAN on the controller
+
+    ThermalRecoveryParams params;
+    params.setpointC = realSetpointC;
+    params.inletC = static_cast<float>(settings.getInletWaterTemp());
+    params.heaterWatts = HEATER_OUTPUT_SPAN / pid[3];
+    params.boilerCapacityJPerK = static_cast<float>(settings.getBoilerHeatCapacity());
+    params.maxBoostK = maxBoost;
+    params.ceilingC = THERMAL_BANK_CEILING_C;
+    params.deadbandK = THERMAL_RECOVERY_DEADBAND_K;
+    params.maxDebtS = THERMAL_RECOVERY_MAX_DEBT_S;
+
+    // A gap longer than the cap means the loop was blocked (an OTA, a long BLE stall) and the telemetry we are holding
+    // no longer describes the interval, so the interval is skipped rather than extrapolated across.
+    if (dtS > 0.0f && dtS <= RECOVERY_MAX_SAMPLE_GAP_S) {
+        thermalRecovery.sample(dtS, currentPumpFlow, currentHeaterPower, params);
+    }
+
+    return thermalRecovery.offsetK(params);
+}
+
+// The thermal model as the firmware currently believes it, assembled from settings. The element rating comes from the
+// feedforward gain (Kff = 1000 / watts) rather than a field of its own, so there is one number to get right and the
+// bank, the recovery, the live model and the power estimate cannot disagree about it.
+BoilerModelParams Controller::modelParams() const {
+    BoilerModelParams params;
+    float pid[4];
+    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    params.heaterWatts = pid[3] > 0.0f ? 1000.0f / pid[3] : 0.0f;
+    params.capacityJPerK = static_cast<float>(settings.getBoilerHeatCapacity());
+    params.inletC = static_cast<float>(settings.getInletWaterTemp());
+    // No separate ambient setting: a machine's room and its tank sit at the same temperature to within a degree or
+    // two, and the loss term this feeds is small enough that the difference does not show.
+    params.ambientC = static_cast<float>(settings.getInletWaterTemp());
+    // Standing loss and sensor lag have no settings of their own. They change nothing the machine does -- only what
+    // the model predicts -- and a shot log cannot identify the loss term anyway (see BoilerIdentifier.h). These are
+    // the figures the identifier produces for a Silvia; tools/shotsim prints the fitted pair if a machine differs.
+    params.lossWPerK = 1.2f;
+    params.sensorTauS = 4.0f;
+    return params;
+}
+
+// Steps the live boiler model and the power estimate. Observers only: nothing computed here reaches a command, which
+// is what makes them safe to leave running.
+void Controller::updateObservers(const float dtS) {
+    const BoilerModelParams params = modelParams();
+
+    // The real boiler temperature, not the displayed one: onTempRead takes the offset out on the way in, and the model
+    // is about the temperature the metal is actually at.
+    const float measuredC = currentTemp + static_cast<float>(settings.getTemperatureOffset());
+    boilerObserver.sample(dtS, measuredC, currentHeaterPower / 100.0f, currentPumpFlow, params);
+
+    PowerEstimateInputs inputs;
+    inputs.heaterDutyPercent = currentHeaterPower;
+    inputs.pumpPowerPercent = currentPumpPower;
+    PowerEstimateParams powerParams;
+    // Falls back to the measured default rather than zero: a machine with no Kff set still draws what it draws, and
+    // reporting 0 W while the element is on would be plainly wrong.
+    powerParams.heaterWatts = params.heaterWatts > 0.0f ? params.heaterWatts : POWER_ESTIMATE_DEFAULT_HEATER_W;
+    powerParams.pumpWatts = settings.getPumpRatedWatts();
+    powerEstimate = estimatePower(inputs, powerParams);
+    if (dtS > 0.0f && dtS <= BOILER_OBSERVER_MAX_GAP_S) {
+        powerAccumulator.accumulate(dtS, powerEstimate.totalW);
+    }
+}
+
 void Controller::setTargetTemp(float temperature) {
     pluginManager->trigger("boiler:targetTemperature:change", "value", temperature);
     switch (mode) {
@@ -1115,12 +1207,28 @@ void Controller::updateControl() {
     Process *proc = currentProcess;
     bool active = isActiveLocked();
 
+    // One interval for everything that integrates over time -- the recovery balance, the live model, the energy total
+    // -- so they cannot disagree about how long the last frame lasted.
+    const unsigned long now = millis();
+    const float dtS = static_cast<float>(now - lastObserverSampleAt) / 1000.0f;
+    lastObserverSampleAt = now;
+
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
-        // Park the boiler above the setpoint while it waits, so the shot's high-flow phases draw on stored energy.
-        targetTemp = targetTemp + getThermalBankOffset();
+        // sendControllerUpdate owns the temperature offset: the boiler physically sits that much hotter than the UI
+        // shows, and both compensations below are reasoning about the real boiler temperature, so apply it first.
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
+        // Two ways of asking for the same thing -- park the boiler above its setpoint so a shot has energy to spend.
+        // Banking predicts the shortfall from the profile before the shot; recovery measures what the shot actually
+        // removed and has not been paid back yet. They overlap once a shot ends, when the bank is no longer suppressed
+        // and a debt is still outstanding, so take the larger rather than the sum: both are a request for a boiler
+        // temperature, not an amount of energy to add, and adding them would ask for a temperature neither intended.
+        thermalRecoveryOffset = updateThermalRecovery(dtS, targetTemp);
+        targetTemp = targetTemp + std::max(getThermalBankOffset(), thermalRecoveryOffset);
+    } else {
+        thermalRecoveryOffset = updateThermalRecovery(dtS, 0.0f);
     }
+    updateObservers(dtS);
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {

@@ -83,6 +83,8 @@ class Settings {
     int getTargetWaterTemp() const { return targetWaterTemp.get(); }
     int getTemperatureOffset() const { return temperatureOffset.get(); }
     float getMaxThermalBank() const { return maxThermalBank.get(); }
+    float getMaxThermalRecovery() const { return maxThermalRecovery.get(); }
+    float getPumpRatedWatts() const { return pumpRatedWatts.get(); }
     int getInletWaterTemp() const { return inletWaterTemp.get(); }
     int getBoilerHeatCapacity() const { return boilerHeatCapacity.get(); }
     float getPressureOffset() const { return pressureOffset.get(); }
@@ -203,6 +205,8 @@ class Settings {
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
     void setMaxThermalBank(float max_thermal_bank);
+    void setMaxThermalRecovery(float max_thermal_recovery);
+    void setPumpRatedWatts(float pump_rated_watts);
     void setInletWaterTemp(int inlet_water_temp);
     void setBoilerHeatCapacity(int boiler_heat_capacity);
     void setPressureOffset(float pressure_offset);
@@ -316,6 +320,8 @@ class Settings {
     Property<int> targetWaterTemp{registry, "tw", 80};
     Property<int> temperatureOffset{registry, "to", DEFAULT_TEMPERATURE_OFFSET};
     Property<float> maxThermalBank{registry, "tb_max", DEFAULT_MAX_THERMAL_BANK};
+    Property<float> maxThermalRecovery{registry, "tr_max", DEFAULT_MAX_THERMAL_RECOVERY};
+    Property<float> pumpRatedWatts{registry, "pw_rated", DEFAULT_PUMP_RATED_WATTS};
     Property<int> inletWaterTemp{registry, "tb_in", DEFAULT_INLET_WATER_TEMP};
     Property<int> boilerHeatCapacity{registry, "tb_cap", DEFAULT_BOILER_HEAT_CAPACITY};
     Property<float> pressureOffset{registry, "poff", DEFAULT_PRESSURE_OFFSET};

@@ -45,6 +45,21 @@
 #define THERMAL_BANK_PUCK_LIMITED_PRESSURE 4.0f
 // Free flow assumed at 100 % for a simple on/off pump, which reports no flow at all.
 #define THERMAL_BANK_SIMPLE_PUMP_FLOW 5.0f
+// Reactive thermal recovery (src/display/util/ThermalRecovery.h). Off by default for the same reason as the bank: the
+// cap is the switch, so the shared capacity and inlet figures cannot change behaviour until the user opts in.
+#define DEFAULT_MAX_THERMAL_RECOVERY 0.0f
+#define MAX_THERMAL_RECOVERY_LIMIT 5.0f
+// A debt worth less than this in boiler temperature is noise, not a sag. Without a deadband the measured balance never
+// settles exactly and the boiler would sit a fraction of a degree high forever.
+#define THERMAL_RECOVERY_DEADBAND_K 0.1f
+// Debt cap, in seconds of full element output: the most a stuck flow reading can accumulate before the cap holds it.
+// 60 s of 900 W is 54 kJ, roughly four times the largest debt a real shot produces.
+#define THERMAL_RECOVERY_MAX_DEBT_S 60.0f
+// Pump power at full drive, measured at the plug (59 W on the user's Silvia). Feeds the power estimate in
+// src/display/util/PowerEstimate.h; the element rating comes from the feedforward gain instead, so there is one
+// source of truth for it. 0 leaves the pump out of the estimate rather than guessing.
+#define DEFAULT_PUMP_RATED_WATTS 59.0f
+#define MAX_PUMP_RATED_WATTS 500.0f
 #define DEFAULT_PUMP_MODEL_COEFFS "10.205,5.521"
 #define DEFAULT_PUMP_SLIP_COEFFS "0,0,0,0"
 #define DEFAULT_MDNS_NAME "gaggimate"
