@@ -977,7 +977,13 @@ void WebUIPlugin::serviceFirmwareUpload(unsigned long now) {
     bool restart = false;
     {
         std::lock_guard<std::mutex> lock(firmwareMutex);
-        if (firmwareRequest != nullptr && now - firmwareLastData > FIRMWARE_UPLOAD_STALL_MS) {
+        // Signed delta: `now` is sampled in loop() before this blocks on the mutex, and the upload callback updates
+        // firmwareLastData under that same mutex. Once a chunk lands after `now` was taken — which happens throughout
+        // a real image's upload, where every chunk holds the lock through an esp_ota_write — the unsigned difference
+        // wrapped to ~49 days and cancelled a healthy upload, leaving handleFirmwareUpload to report that no file
+        // arrived. Negative now means "a chunk came in since", i.e. not stalled.
+        const long sinceLastData = static_cast<long>(now - firmwareLastData);
+        if (firmwareRequest != nullptr && sinceLastData > static_cast<long>(FIRMWARE_UPLOAD_STALL_MS)) {
             ESP_LOGW("WebUIPlugin", "Firmware upload stalled, cancelling it");
             firmwareUpload.abort();
             firmwareRequest = nullptr;
