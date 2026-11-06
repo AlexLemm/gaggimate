@@ -147,6 +147,10 @@ msgstr "いずれかの間隔に達するとクリーニングの警告が表示
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "同じ alpha 値でも 80 SPS ではより頻繁に適用されるため、時間的には速く反応します。2 つの alpha 値は、使用するサンプルレートに合わせてそれぞれ調整してください。サンプルレートを変更すると、妥当な初期値として両方の値が 10 SPS では 0.80、80 SPS では 0.40 にリセットされます。"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "A shot's high-flow phases need more power than the heating element can deliver, so the temperature drops as cold water arrives. The profile states the flow of every phase before the shot starts, so the boiler can wait a little hotter and spend that stored heat on the shot instead of sagging through it."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
 msgstr "アクセスポイントのパスワード"
@@ -561,9 +565,17 @@ msgstr "BLDC ポンプ設定"
 msgid "Bluetooth Devices"
 msgstr "Bluetooth デバイス"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Board"
+msgstr ""
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "ボイラー {temperature} °C"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Boiler Heat Capacity"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Boiler Refill Plugin"
@@ -976,6 +988,10 @@ msgstr "接続中…"
 msgid "Control Column Style"
 msgstr "コントロール列のスタイル"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Controller"
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "コントローラーのエラーとエラーレベルの警告。"
@@ -1315,6 +1331,10 @@ msgstr "切断"
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Dismiss"
 msgstr "閉じる"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Display Settings"
@@ -1658,6 +1678,10 @@ msgstr "ショットの詳細を展開"
 msgid "Expand statistics toolbar"
 msgstr "統計ツールバーを展開"
 
+#: src/pages/Settings/index.jsx
+msgid "Experimental"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Explain WebM export"
 msgstr "WebM エクスポートについて"
@@ -1800,6 +1824,10 @@ msgstr ""
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "Firmware installed. Waiting for the machine to restart..."
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Firmware sent. The machine is installing it on the controller over Bluetooth, which takes a few minutes. Leave the machine powered on until it finishes."
 msgstr ""
 
 #: src/utils/panelDefinitions.js
@@ -2014,6 +2042,10 @@ msgstr "ハードウェア"
 msgid "Hardware Scale"
 msgstr "ハードウェアスケール"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Heat capacity of boiler, group and water. Larger values bank less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
+msgstr ""
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater Coordination"
 msgstr "ヒーター協調"
@@ -2195,8 +2227,12 @@ msgstr "未完了"
 msgid "Infusion"
 msgstr "インフュージョン"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Inlet Water Temperature"
+msgstr ""
+
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
-msgid "Install a display firmware file (.bin) from this computer over Wi-Fi. This also lets you go back to an earlier version. Controller firmware cannot be installed here."
+msgid "Install a firmware file (.bin) from this computer over Wi-Fi, on either board. This also lets you go back to an earlier version. Controller firmware travels on to the controller over Bluetooth, so no cable is needed for it either."
 msgstr ""
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
@@ -2647,6 +2683,10 @@ msgstr "その他の操作"
 #: src/pages/Settings/index.jsx
 msgid "More options"
 msgstr "その他のオプション"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it. Needs the feedforward gain set on the Machine tab, which is where the element wattage comes from."
+msgstr ""
 
 #: src/pages/ProfileList/index.jsx
 msgid "Move {label} to bottom"
@@ -3235,6 +3275,10 @@ msgstr "ヒーターを同時ではなく 1 つずつ、抽出ボイラーから
 #: src/pages/ProfileList/index.jsx
 msgid "Pre-Infusion"
 msgstr "プレインフュージョン"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Pre-Shot Thermal Bank"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Predictive Scale Delay"
@@ -4554,6 +4598,10 @@ msgstr "開始"
 msgid "Start anyway"
 msgstr "それでも開始"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Start at 2 °C. If the first mouthful tastes hot, lower it or raise the heat capacity. Set the bank to 0 to turn this off."
+msgstr ""
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Start Autotune"
 msgstr "オートチューンを開始"
@@ -4983,6 +5031,10 @@ msgstr "温度（摂氏）"
 msgid "Temperature not stable"
 msgstr "温度が安定していません"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Temperature of the water in the tank, used to work out how much heat the incoming water takes. Lower it in winter if you fill from a cold tap."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Offset (°C)"
 msgstr "温度オフセット (°C)"
@@ -5083,6 +5135,10 @@ msgstr "テーマ"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Theme & Notifications"
 msgstr "テーマと通知"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Thermal Bank"
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Thermal Feedforward Gain"

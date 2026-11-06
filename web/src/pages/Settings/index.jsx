@@ -43,8 +43,12 @@ const LazyCalibrationTab = lazy(() =>
 const LazyPluginsTab = lazy(() => import('./tabs/PluginsTab.jsx').then(m => m.PluginsTab));
 const LazyBluetoothTab = lazy(() => import('./tabs/BluetoothTab.jsx').then(m => m.BluetoothTab));
 const LazySystemTab = lazy(() => import('./tabs/SystemTab.jsx').then(m => m.SystemTab));
+const LazyExperimentalTab = lazy(() =>
+  import('./tabs/ExperimentalTab.jsx').then(m => m.ExperimentalTab),
+);
 
 const loadMachineTab = () => import('./tabs/MachineTab.jsx');
+const loadExperimentalTab = () => import('./tabs/ExperimentalTab.jsx');
 const loadCalibrationTab = () => import('./tabs/CalibrationTab.jsx');
 const loadPluginsTab = () => import('./tabs/PluginsTab.jsx');
 const loadBluetoothTab = () => import('./tabs/BluetoothTab.jsx');
@@ -57,6 +61,7 @@ import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
+import { faFlask } from '@fortawesome/free-solid-svg-icons/faFlask';
 import { isApp } from '../../app/platform.js';
 
 const CHECKBOX_KEYS = [
@@ -257,7 +262,7 @@ export function Settings() {
   const { t } = useLingui();
   const { params } = useRoute();
   const tab = params.tab || 'general';
-  const isFormTab = ['general', 'machine', 'plugins'].includes(tab);
+  const isFormTab = ['general', 'machine', 'plugins', 'experimental'].includes(tab);
 
   const { profiles } = useProfileList();
   const [submitting, setSubmitting] = useState(false);
@@ -480,6 +485,7 @@ export function Settings() {
     { id: 'plugins', label: t`Plugins`, icon: faPuzzlePiece, preload: loadPluginsTab },
     { id: 'bluetooth', label: 'Bluetooth', icon: faBluetoothB, preload: loadBluetoothTab },
     { id: 'system', label: t`System & Updates`, icon: faRotate, preload: loadSystemTab },
+    { id: 'experimental', label: t`Experimental`, icon: faFlask, preload: loadExperimentalTab },
   ];
 
   const importName = importNotice?.name;
@@ -632,6 +638,12 @@ export function Settings() {
             <MachineTabSkeleton />
           ) : (
             <LazyMachineTab formData={formData} onChange={onChange} setField={setField} />
+          ))}
+        {tab === 'experimental' &&
+          (isLoading ? (
+            <MachineTabSkeleton />
+          ) : (
+            <LazyExperimentalTab formData={formData} onChange={onChange} />
           ))}
         {tab === 'plugins' &&
           (isLoading ? (

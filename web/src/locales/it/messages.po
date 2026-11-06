@@ -151,6 +151,10 @@ msgstr "Un avviso di pulizia viene mostrato al raggiungimento di uno dei due int
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "Un dato valore alfa agisce più rapidamente nel tempo a 80 SPS perché viene applicato più spesso. Regola i due valori alfa in modo indipendente per la frequenza di campionamento installata. Cambiare la frequenza di campionamento reimposta entrambi i valori a 0.80 a 10 SPS o 0.40 a 80 SPS come punti di partenza sensati."
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "A shot's high-flow phases need more power than the heating element can deliver, so the temperature drops as cold water arrives. The profile states the flow of every phase before the shot starts, so the boiler can wait a little hotter and spend that stored heat on the shot instead of sagging through it."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
 msgstr "Password dell'access point"
@@ -565,9 +569,17 @@ msgstr "Impostazioni pompa BLDC"
 msgid "Bluetooth Devices"
 msgstr "Dispositivi Bluetooth"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Board"
+msgstr ""
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Caldaia a {temperature} °C"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Boiler Heat Capacity"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Boiler Refill Plugin"
@@ -980,6 +992,10 @@ msgstr "Connessione…"
 msgid "Control Column Style"
 msgstr "Stile colonna di controllo"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Controller"
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "Errori del controller e avvisi di livello errore."
@@ -1319,6 +1335,10 @@ msgstr "Disconnetti"
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Dismiss"
 msgstr "Ignora"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Display Settings"
@@ -1662,6 +1682,10 @@ msgstr "Espandi dettagli estrazione"
 msgid "Expand statistics toolbar"
 msgstr "Espandi barra statistiche"
 
+#: src/pages/Settings/index.jsx
+msgid "Experimental"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Explain WebM export"
 msgstr "Informazioni sull'esportazione WebM"
@@ -1804,6 +1828,10 @@ msgstr ""
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "Firmware installed. Waiting for the machine to restart..."
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Firmware sent. The machine is installing it on the controller over Bluetooth, which takes a few minutes. Leave the machine powered on until it finishes."
 msgstr ""
 
 #: src/utils/panelDefinitions.js
@@ -2018,6 +2046,10 @@ msgstr "Hardware"
 msgid "Hardware Scale"
 msgstr "Bilancia hardware"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Heat capacity of boiler, group and water. Larger values bank less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
+msgstr ""
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater Coordination"
 msgstr "Coordinamento resistenze"
@@ -2199,8 +2231,12 @@ msgstr "INCOMPLETO"
 msgid "Infusion"
 msgstr "Infusione"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Inlet Water Temperature"
+msgstr ""
+
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
-msgid "Install a display firmware file (.bin) from this computer over Wi-Fi. This also lets you go back to an earlier version. Controller firmware cannot be installed here."
+msgid "Install a firmware file (.bin) from this computer over Wi-Fi, on either board. This also lets you go back to an earlier version. Controller firmware travels on to the controller over Bluetooth, so no cable is needed for it either."
 msgstr ""
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
@@ -2651,6 +2687,10 @@ msgstr "Altre azioni"
 #: src/pages/Settings/index.jsx
 msgid "More options"
 msgstr "Altre opzioni"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it. Needs the feedforward gain set on the Machine tab, which is where the element wattage comes from."
+msgstr ""
 
 #: src/pages/ProfileList/index.jsx
 msgid "Move {label} to bottom"
@@ -3239,6 +3279,10 @@ msgstr "Alimenta le resistenze una alla volta invece che in parallelo, prima la 
 #: src/pages/ProfileList/index.jsx
 msgid "Pre-Infusion"
 msgstr "Preinfusione"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Pre-Shot Thermal Bank"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Predictive Scale Delay"
@@ -4558,6 +4602,10 @@ msgstr "Avvia"
 msgid "Start anyway"
 msgstr "Avvia comunque"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Start at 2 °C. If the first mouthful tastes hot, lower it or raise the heat capacity. Set the bank to 0 to turn this off."
+msgstr ""
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Start Autotune"
 msgstr "Avvia autotune"
@@ -4987,6 +5035,10 @@ msgstr "Temperatura in gradi Celsius"
 msgid "Temperature not stable"
 msgstr "Temperatura non stabile"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Temperature of the water in the tank, used to work out how much heat the incoming water takes. Lower it in winter if you fill from a cold tap."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Offset (°C)"
 msgstr "Offset temperatura (°C)"
@@ -5087,6 +5139,10 @@ msgstr "Tema"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Theme & Notifications"
 msgstr "Tema e notifiche"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Thermal Bank"
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Thermal Feedforward Gain"
