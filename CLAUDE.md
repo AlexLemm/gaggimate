@@ -61,3 +61,31 @@ only, at `0x0`, `0x8000`, `0xe000` and `0x10000`.
 `pio test -e native` needs a host compiler (gcc/g++ on PATH), not the ESP32 toolchain. `test_ota_loadtest` only builds
 on POSIX hosts — `test/ota_common/PosixHttpTransport.h` includes `arpa/inet.h` — so it errors on Windows regardless of
 your changes.
+
+## The toolchains are not on PATH
+
+Three of them, each failing in a way that looks like something else.
+
+```bash
+export PATH="/c/Users/Alexi/Documents/Claude/tools/mingw64/bin:$PATH"            # gcc/g++ for native tests
+export PATH="/c/Users/Alexi/Documents/Claude/tools/node-v22.23.4-win-x64:$PATH"  # node 22 for the web build
+export PATH="$PATH:/c/Users/Alexi/AppData/Local/Programs/Python/Python313/Scripts" # pio
+```
+
+`node` and `npm` on PATH are **v6.10.0**, from `C:\Program Files\nodejs`. Vite and Lingui are ESM, so v6 cannot load
+them — and `npm run` does not fail, it hangs. Two `node` processes sitting at 0.9 s of CPU and 1 MB of memory is what
+that looks like; nothing is printed, ever. Put `tools/node-v22.23.4-win-x64` first on PATH and `lingui extract` takes
+six seconds.
+
+`py` is the Python that runs `scripts/embed_webui.py`. `python3` resolves to a Microsoft Store stub that refuses to
+execute, and bash has no `python` at all.
+
+## Do not run multi-statement perl -0pi scripts against these files
+
+`perl -0pi -e 's{...}{...}; s{...}{...}'` with braces and newlines inside the patterns silently wrote the rest of the
+script into `Controller.cpp` as source text, producing `error: 's' does not name a type`. The first substitution
+applied and the remainder became replacement text.
+
+For a multi-line edit, write the replacement to a file and splice it by line number with `awk`, or use one
+substitution per `perl` invocation. Note also that most files here are **CRLF** (`core.autocrlf=true`), so a pattern
+ending in `\n` does not match — use `\r?\n`.
