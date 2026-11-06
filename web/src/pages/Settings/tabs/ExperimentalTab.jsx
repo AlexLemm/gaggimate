@@ -4,7 +4,7 @@ import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 import { FeatureStatus } from './experimental/FeatureStatus.jsx';
 import { ModelTraceChart } from './experimental/ModelTraceChart.jsx';
 import { PowerPanel } from './experimental/PowerPanel.jsx';
-import { featureState, heaterWattsFromPid, num, thermalBlocker } from './experimental/thermalModel.js';
+import { BLOCKER, featureState, heaterWattsFromPid, num, thermalBlocker } from './experimental/thermalModel.js';
 
 // Settings that change how the machine heats, kept apart from Machine so they are not adjusted in passing. Each one
 // here is reversible from this page alone: setting a cap back to 0 restores the previous behaviour exactly.
@@ -24,7 +24,14 @@ export function ExperimentalTab({ formData, onChange }) {
   const capacity = num(formData.boilerHeatCapacity);
   const bank = num(formData.maxThermalBank);
   const recovery = num(formData.maxThermalRecovery);
-  const blocker = thermalBlocker(formData, t);
+  // thermalBlocker returns a code; the wording lives here, where the Lingui macro can actually see it.
+  const blockerCode = thermalBlocker(formData);
+  const blocker =
+    blockerCode === BLOCKER.NEEDS_KFF
+      ? t`Set the fourth PID coefficient (Kff) on the Machine tab — the element wattage comes from it.`
+      : blockerCode === BLOCKER.NEEDS_CAPACITY
+        ? t`Set a boiler heat capacity below.`
+        : null;
 
   const detail = (cap, onText) => {
     if (num(cap) <= 0) return t`Disabled — the cap is 0.`;
@@ -45,7 +52,7 @@ export function ExperimentalTab({ formData, onChange }) {
           <div>
             <FeatureStatus
               name={t`Pre-Shot Thermal Bank`}
-              state={featureState(bank, blocker)}
+              state={featureState(bank, blockerCode)}
               value={bank > 0 ? `${bankCap} °C` : null}
               detail={detail(
                 bank,
@@ -54,7 +61,7 @@ export function ExperimentalTab({ formData, onChange }) {
             />
             <FeatureStatus
               name={t`Thermal Recovery`}
-              state={featureState(recovery, blocker)}
+              state={featureState(recovery, blockerCode)}
               value={recovery > 0 ? `${recoveryCap} °C` : null}
               detail={detail(
                 recovery,
@@ -63,7 +70,7 @@ export function ExperimentalTab({ formData, onChange }) {
             />
             <FeatureStatus
               name={t`Live Model & Power Estimate`}
-              state={featureState(watts > 0 && capacity > 0 ? 1 : 0, blocker)}
+              state={featureState(watts > 0 && capacity > 0 ? 1 : 0, blockerCode)}
               value={watts > 0 ? `${Math.round(watts)} W` : null}
               detail={
                 blocker ??

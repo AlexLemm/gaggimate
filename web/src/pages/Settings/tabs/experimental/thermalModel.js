@@ -14,15 +14,22 @@ export const heaterWattsFromPid = pid => {
   return kff > 0 ? 1000 / kff : 0;
 };
 
-// The prerequisite that is missing, or null when nothing is. Reported as the specific fix rather than a generic
-// failure, because the two come from different places: the wattage from autotune or by hand on the Machine tab, the
-// capacity from a field on this page.
-export const thermalBlocker = (formData, t) => {
+// Which prerequisite is missing, as a CODE rather than a message, or null when nothing is.
+//
+// Deliberately not translated here. Lingui's `t` is a compile-time macro: it is rewritten at the call site by the
+// transform, which only runs where the macro is imported. Passing `t` in from a component and using it as a template
+// tag in this plain module leaves it untransformed, so the string comes back empty and every caller silently reports
+// the wrong state -- which is exactly what the status panel did on its first run against the machine.
+//
+// So the decision lives here and the wording lives in the component, where the macro can see it.
+export const BLOCKER = { NEEDS_KFF: 'needs-kff', NEEDS_CAPACITY: 'needs-capacity' };
+
+export const thermalBlocker = formData => {
   if (heaterWattsFromPid(formData.pid) <= 0) {
-    return t`Set the fourth PID coefficient (Kff) on the Machine tab — the element wattage comes from it.`;
+    return BLOCKER.NEEDS_KFF;
   }
   if (num(formData.boilerHeatCapacity) <= 0) {
-    return t`Set a boiler heat capacity below.`;
+    return BLOCKER.NEEDS_CAPACITY;
   }
   return null;
 };

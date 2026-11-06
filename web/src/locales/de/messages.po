@@ -4345,9 +4345,17 @@ msgstr "Kalibrierprofil wird ausgewählt..."
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Serverfehler – die API unterstützt dieses Datenformat oder diesen Kontotyp möglicherweise nicht"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Set a boiler heat capacity below."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Set rating to {value} of 5"
 msgstr "Bewertung auf {value} von 5 setzen"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Set the fourth PID coefficient (Kff) on the Machine tab — the element wattage comes from it."
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Set to 0 to disable feedforward control."
