@@ -1,6 +1,7 @@
 #pragma once
 #ifndef UTILS_H
 #define UTILS_H
+#include <stdexcept>
 #include <Arduino.h>
 #include <memory>
 
