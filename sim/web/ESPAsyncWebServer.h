@@ -74,6 +74,13 @@ class AsyncWebServerRequest {
 
     const String &url() const { return _url; }
     int method() const { return _method; }
+    bool hasHeader(const char *name) const {
+        std::string key(name);
+        for (auto &ch : key)
+            ch = static_cast<char>(tolower(static_cast<unsigned char>(ch)));
+        return _headers.count(key) != 0;
+    }
+    std::map<std::string, std::string> _headers; // names lower-cased by the HTTP parser
     bool hasArg(const char *name) const { return _args.count(name) > 0; }
     bool hasArg(const String &name) const { return hasArg(name.c_str()); }
     String arg(const char *name) const {

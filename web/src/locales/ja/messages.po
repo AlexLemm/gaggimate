@@ -507,6 +507,10 @@ msgstr "戻る"
 msgid "Back to analyzer"
 msgstr "アナライザーに戻る"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Back up your profiles first. Older firmware may not understand settings saved by a newer version, and a firmware that cannot start needs reinstalling over USB."
+msgstr ""
+
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Backflush"
 msgstr "バックフラッシュ"
@@ -1790,6 +1794,14 @@ msgstr "完了時の色"
 msgid "Firmware {version} – not all features may be available."
 msgstr "ファームウェア {version} – 一部の機能は利用できない場合があります。"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Firmware file"
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Firmware installed. Waiting for the machine to restart..."
+msgstr ""
+
 #: src/utils/panelDefinitions.js
 msgid "Flexible Space"
 msgstr "フレキシブルスペース"
@@ -2182,6 +2194,18 @@ msgstr "未完了"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "インフュージョン"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Install a display firmware file (.bin) from this computer over Wi-Fi. This also lets you go back to an earlier version. Controller firmware cannot be installed here."
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Install File"
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Install Firmware File"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -4999,6 +5023,10 @@ msgstr "チャートは Pro プロファイルでのみ表示されます"
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
 msgstr "設定または推定されたスケール遅延が異常に大きくなっています。予測重量停止を使う前にスケール遅延の設定を確認してください。"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "The connection was lost during the upload. The machine kept its current firmware."
+msgstr ""
+
 #: src/app/notifications.js
 msgid "The controller reported an error."
 msgstr "コントローラーがエラーを報告しました。"
@@ -5011,6 +5039,10 @@ msgstr "ファイルに既知の設定が含まれていません。"
 msgid "The file does not contain a settings object."
 msgstr "ファイルに設定オブジェクトが含まれていません。"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "The firmware was installed, but the machine has not come back yet. If it stays unreachable, check its screen, then reinstall over USB."
+msgstr ""
+
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "現在有効な警告:"
@@ -5022,6 +5054,10 @@ msgstr "グラインダーはこのアドレスで GaggiMate に接続するた�
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "マシンが 5 分間スチームモードのままです。"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "The machine rejected this file."
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
@@ -5383,6 +5419,10 @@ msgstr "visualizer.coffee にアップロード"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Upload to Visualizer.coffee"
 msgstr "Visualizer.coffee にアップロード"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Uploading: {progress}%. Keep this page open."
+msgstr ""
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Uploading..."

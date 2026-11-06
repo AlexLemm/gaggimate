@@ -8,7 +8,10 @@
 #include "GitHubOTA.h"
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
+#include <atomic>
+#include <mutex>
 #include <display/core/Plugin.h>
+#include <display/plugins/FirmwareUpload.h>
 #include <display/plugins/WebSocketHandler.h>
 #include <display/util/PsramAllocator.h>
 
@@ -63,6 +66,12 @@ class WebUIPlugin : public Plugin {
     void handleProfileImage(AsyncWebServerRequest *request);
     void handleProfileImageBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 
+    // Display firmware uploaded from the browser. The handlers run on the web server's task; serviceFirmwareUpload
+    // runs on the plugin loop, where the update events and the restart belong.
+    void handleFirmwareUpload(AsyncWebServerRequest *request);
+    void handleFirmwareUploadBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+    void serviceFirmwareUpload(unsigned long now);
+
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
     WebSocketHandler wsHandler;
@@ -83,6 +92,19 @@ class WebUIPlugin : public Plugin {
     AsyncWebServerRequest *imageUploadRequest = nullptr;
     File imageUploadFile;
     String imageUploadError;
+
+    // Guards everything firmware* below except the atomic. The request pointers are only ever compared.
+    std::mutex firmwareMutex;
+    FirmwareUpload firmwareUpload;
+    AsyncWebServerRequest *firmwareRequest = nullptr;
+    AsyncWebServerRequest *firmwareRejectedRequest = nullptr;
+    const char *firmwareRejectReason = "";
+    unsigned long firmwareLastData = 0;
+    unsigned long firmwareRestartAt = 0;
+    bool firmwareRestartPending = false;
+    bool firmwareStartEventPending = false;
+    bool firmwareEndEventPending = false;
+    std::atomic<bool> firmwareUploadRunning{false};
 };
 
 #endif // WEBUIPLUGIN_H

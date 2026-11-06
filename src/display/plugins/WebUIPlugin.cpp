@@ -21,6 +21,14 @@
 
 static WebUIPlugin *g_webUIPlugin = nullptr;
 
+// Browsers will not send a custom header to another site without permission, which this server never grants, so
+// requiring it stops a web page from posting firmware to the machine behind the user's back.
+static constexpr const char *FIRMWARE_UPLOAD_HEADER = "X-GaggiMate-Firmware";
+// A client that vanishes never completes its request, so the upload lock has to expire on its own.
+static constexpr unsigned long FIRMWARE_UPLOAD_STALL_MS = 15000;
+// Long enough for the success response to reach the browser before the restart cuts the connection.
+static constexpr unsigned long FIRMWARE_RESTART_DELAY_MS = 1000;
+
 // Route mbedTLS allocations to PSRAM.
 static void *mbedtlsPsramCalloc(size_t n, size_t size) { // NOSONAR
     void *p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -76,6 +84,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 }
 
 void WebUIPlugin::loop() {
+    serviceFirmwareUpload(millis());
     if (updating) {
         // Pass which component is being flashed: a controller update streams the
         // firmware over BLE (wants a low-latency link), a display update is over
@@ -94,7 +103,8 @@ void WebUIPlugin::loop() {
     // must not have the control loop stalled for the duration of the handshake, nor compete
     // with it for memory. isActive() is the reliable "a process is running" signal. Subtraction
     // (not now > last + interval) keeps the interval check millis()-rollover-safe.
-    if (!controller->isActive() && (lastUpdateCheck == 0 || now - lastUpdateCheck > UPDATE_CHECK_INTERVAL)) {
+    if (!controller->isActive() && !firmwareUploadRunning &&
+        (lastUpdateCheck == 0 || now - lastUpdateCheck > UPDATE_CHECK_INTERVAL)) {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable() || ota->isUpdateAvailable(true));
         lastUpdateCheck = now;
@@ -238,6 +248,11 @@ void WebUIPlugin::setupServer() {
         [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
             handleProfileImageBody(request, data, len, index, total);
         });
+    server.on(
+        "/api/firmware/upload", HTTP_POST, [this](AsyncWebServerRequest *request) { handleFirmwareUpload(request); }, nullptr,
+        [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            handleFirmwareUploadBody(request, data, len, index, total);
+        });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no
     // longer in LittleFS, so OTA never touches the partition holding profiles/shots. The catch-all onNotFound handles
     // every path not claimed by an explicit server.on()/api route above. [GM-106]
@@ -303,6 +318,10 @@ void WebUIPlugin::handleOTASettings(JsonDocument &request) {
 }
 
 void WebUIPlugin::handleOTAStart(JsonDocument &request) {
+    if (firmwareUploadRunning) {
+        ESP_LOGW("WebUIPlugin", "Ignoring update request during a firmware upload");
+        return;
+    }
     updating = true;
     if (request["cp"].is<String>()) {
         updateComponent = request["cp"].as<String>();
@@ -891,6 +910,102 @@ void WebUIPlugin::handleProfileImage(AsyncWebServerRequest *request) {
     }
     default:
         request->send(405);
+    }
+}
+
+void WebUIPlugin::handleFirmwareUploadBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index,
+                                           size_t total) {
+    std::lock_guard<std::mutex> lock(firmwareMutex);
+    if (index == 0) {
+        const char *reason = nullptr;
+        if (firmwareRequest != nullptr) {
+            reason = "Another firmware upload is in progress";
+        } else if (!request->hasHeader(FIRMWARE_UPLOAD_HEADER)) {
+            reason = "Firmware can only be installed from the machine's own web page";
+        } else if (updating || controller->isUpdating() || firmwareRestartPending) {
+            reason = "An update is already running";
+        } else if (controller->isActive()) {
+            reason = "Finish the brew, steam or water process before installing firmware";
+        } else if (!firmwareUpload.begin(total, OTA_DISPLAY_FIRMWARE)) {
+            reason = firmwareUpload.error();
+        }
+        if (reason != nullptr) {
+            firmwareRejectedRequest = request;
+            firmwareRejectReason = reason;
+            return;
+        }
+        firmwareRequest = request;
+        firmwareUploadRunning = true;
+        firmwareStartEventPending = true;
+    }
+    if (request != firmwareRequest) {
+        return;
+    }
+    firmwareLastData = millis();
+    if (firmwareUpload.active() && !firmwareUpload.write(data, len)) {
+        firmwareEndEventPending = true; // keep draining: the error goes back once the whole body has arrived
+    }
+}
+
+void WebUIPlugin::handleFirmwareUpload(AsyncWebServerRequest *request) {
+    std::lock_guard<std::mutex> lock(firmwareMutex);
+    if (request == firmwareRejectedRequest) {
+        firmwareRejectedRequest = nullptr;
+        request->send(409, "text/plain", firmwareRejectReason);
+        return;
+    }
+    if (request != firmwareRequest) {
+        request->send(400, "text/plain", "No firmware file was received");
+        return;
+    }
+    firmwareRequest = nullptr;
+    firmwareUploadRunning = false;
+    if (firmwareUpload.active() && firmwareUpload.finish()) {
+        ESP_LOGI("WebUIPlugin", "Firmware upload accepted, restarting");
+        firmwareRestartAt = millis() + FIRMWARE_RESTART_DELAY_MS;
+        firmwareRestartPending = true;
+        request->send(200, "application/json", "{}");
+        return;
+    }
+    firmwareEndEventPending = true;
+    request->send(400, "text/plain", firmwareUpload.error());
+}
+
+void WebUIPlugin::serviceFirmwareUpload(unsigned long now) {
+    bool sendStart = false;
+    bool sendEnd = false;
+    bool restart = false;
+    {
+        std::lock_guard<std::mutex> lock(firmwareMutex);
+        if (firmwareRequest != nullptr && now - firmwareLastData > FIRMWARE_UPLOAD_STALL_MS) {
+            ESP_LOGW("WebUIPlugin", "Firmware upload stalled, cancelling it");
+            firmwareUpload.abort();
+            firmwareRequest = nullptr;
+            firmwareUploadRunning = false;
+            firmwareEndEventPending = true;
+        }
+        sendStart = firmwareStartEventPending;
+        sendEnd = firmwareEndEventPending;
+        firmwareStartEventPending = false;
+        firmwareEndEventPending = false;
+        if (firmwareRestartPending && static_cast<long>(now - firmwareRestartAt) >= 0) {
+            restart = true;
+            firmwareRestartPending = false;
+        }
+    }
+    if (sendStart) {
+        pluginManager->trigger("ota:update:start", "component", String("display"));
+    }
+    if (sendEnd) {
+        pluginManager->trigger("ota:update:end");
+    }
+    if (restart) {
+#ifdef GAGGIMATE_SIM
+        ESP_LOGI("WebUIPlugin", "Simulator: skipping the restart after a firmware upload");
+        pluginManager->trigger("ota:update:end");
+#else
+        ESP.restart();
+#endif
     }
 }
 

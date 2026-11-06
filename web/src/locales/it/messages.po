@@ -511,6 +511,10 @@ msgstr "Indietro"
 msgid "Back to analyzer"
 msgstr "Torna all'analizzatore"
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Back up your profiles first. Older firmware may not understand settings saved by a newer version, and a firmware that cannot start needs reinstalling over USB."
+msgstr ""
+
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Backflush"
 msgstr "Backflush"
@@ -1794,6 +1798,14 @@ msgstr "Colore completato"
 msgid "Firmware {version} – not all features may be available."
 msgstr "Firmware {version}: alcune funzioni potrebbero non essere disponibili."
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Firmware file"
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Firmware installed. Waiting for the machine to restart..."
+msgstr ""
+
 #: src/utils/panelDefinitions.js
 msgid "Flexible Space"
 msgstr "Spazio flessibile"
@@ -2186,6 +2198,18 @@ msgstr "INCOMPLETO"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "Infusione"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Install a display firmware file (.bin) from this computer over Wi-Fi. This also lets you go back to an earlier version. Controller firmware cannot be installed here."
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Install File"
+msgstr ""
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Install Firmware File"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -5003,6 +5027,10 @@ msgstr "Il grafico viene mostrato solo per i profili Pro"
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
 msgstr "Il ritardo della bilancia configurato o dedotto è insolitamente alto. Controlla l'impostazione del ritardo bilancia prima di affidarti agli arresti predittivi a peso."
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "The connection was lost during the upload. The machine kept its current firmware."
+msgstr ""
+
 #: src/app/notifications.js
 msgid "The controller reported an error."
 msgstr "Il controller ha segnalato un errore."
@@ -5015,6 +5043,10 @@ msgstr "Il file non contiene impostazioni note."
 msgid "The file does not contain a settings object."
 msgstr "Il file non contiene un oggetto settings."
 
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "The firmware was installed, but the machine has not come back yet. If it stays unreachable, check its screen, then reinstall over USB."
+msgstr ""
+
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "I seguenti avvisi sono attualmente attivi:"
@@ -5026,6 +5058,10 @@ msgstr "Il macinacaffè raggiunge GaggiMate a questo indirizzo, quindi entrambi 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "La macchina è in modalità vapore da 5 minuti."
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "The machine rejected this file."
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
@@ -5387,6 +5423,10 @@ msgstr "Carica su visualizer.coffee"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Upload to Visualizer.coffee"
 msgstr "Carica su Visualizer.coffee"
+
+#: src/pages/Settings/tabs/FirmwareUploadSection.jsx
+msgid "Uploading: {progress}%. Keep this page open."
+msgstr ""
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Uploading..."
