@@ -926,17 +926,24 @@ void WebUIPlugin::handleFirmwareUploadBody(AsyncWebServerRequest *request, uint8
                                            size_t total) {
     std::lock_guard<std::mutex> lock(firmwareMutex);
     if (index == 0) {
+        // ?target=controller installs on the controller board over BLE; anything else is a display image.
+        const bool wantsController = request->hasParam("target") && request->getParam("target")->value() == "controller";
         const char *reason = nullptr;
         if (firmwareRequest != nullptr) {
             reason = "Another firmware upload is in progress";
         } else if (!request->hasHeader(FIRMWARE_UPLOAD_HEADER)) {
             reason = "Firmware can only be installed from the machine's own web page";
-        } else if (updating || controller->isUpdating() || firmwareRestartPending) {
+        } else if (updating || controller->isUpdating() || firmwareRestartPending || stagedControllerUpdatePending) {
             reason = "An update is already running";
         } else if (controller->isActive()) {
             reason = "Finish the brew, steam or water process before installing firmware";
-        } else if (!firmwareUpload.begin(total, OTA_DISPLAY_FIRMWARE)) {
-            reason = firmwareUpload.error();
+        } else if (wantsController && !controller->getClientController()->isConnected()) {
+            // Without the BLE link there is nothing to install onto, and finding that out after a 690 KB upload is a
+            // poor way to learn it.
+            reason = "The controller is not connected, so its firmware cannot be installed";
+        } else if (wantsController ? !controllerFirmwareUpload.begin(total, OTA_DISPLAY_FIRMWARE)
+                                   : !firmwareUpload.begin(total, OTA_DISPLAY_FIRMWARE)) {
+            reason = wantsController ? controllerFirmwareUpload.error() : firmwareUpload.error();
         }
         if (reason != nullptr) {
             firmwareRejectedRequest = request;
@@ -944,6 +951,7 @@ void WebUIPlugin::handleFirmwareUploadBody(AsyncWebServerRequest *request, uint8
             return;
         }
         firmwareRequest = request;
+        firmwareTargetsController = wantsController;
         firmwareUploadRunning = true;
         firmwareStartEventPending = true;
     }
@@ -951,8 +959,12 @@ void WebUIPlugin::handleFirmwareUploadBody(AsyncWebServerRequest *request, uint8
         return;
     }
     firmwareLastData = millis();
-    if (firmwareUpload.active() && !firmwareUpload.write(data, len)) {
-        firmwareEndEventPending = true; // keep draining: the error goes back once the whole body has arrived
+    if (firmwareTargetsController) {
+        if (controllerFirmwareUpload.active() && !controllerFirmwareUpload.write(data, len)) {
+            firmwareEndEventPending = true; // keep draining: the error goes back once the whole body has arrived
+        }
+    } else if (firmwareUpload.active() && !firmwareUpload.write(data, len)) {
+        firmwareEndEventPending = true;
     }
 }
 
@@ -969,6 +981,18 @@ void WebUIPlugin::handleFirmwareUpload(AsyncWebServerRequest *request) {
     }
     firmwareRequest = nullptr;
     firmwareUploadRunning = false;
+    if (firmwareTargetsController) {
+        if (controllerFirmwareUpload.active() && controllerFirmwareUpload.finish()) {
+            // The BLE transfer itself runs from loop(); this board keeps running throughout, so no restart here.
+            ESP_LOGI("WebUIPlugin", "Controller firmware staged, installing over BLE");
+            stagedControllerUpdatePending = true;
+            request->send(200, "application/json", "{}");
+            return;
+        }
+        firmwareEndEventPending = true;
+        request->send(400, "text/plain", controllerFirmwareUpload.error());
+        return;
+    }
     if (firmwareUpload.active() && firmwareUpload.finish()) {
         ESP_LOGI("WebUIPlugin", "Firmware upload accepted, restarting");
         firmwareRestartAt = millis() + FIRMWARE_RESTART_DELAY_MS;
@@ -984,6 +1008,8 @@ void WebUIPlugin::serviceFirmwareUpload(unsigned long now) {
     bool sendStart = false;
     bool sendEnd = false;
     bool restart = false;
+    bool startController = false;
+    String startComponent;
     {
         std::lock_guard<std::mutex> lock(firmwareMutex);
         // Signed delta: `now` is sampled in loop() before this blocks on the mutex, and the upload callback updates
@@ -994,13 +1020,20 @@ void WebUIPlugin::serviceFirmwareUpload(unsigned long now) {
         const long sinceLastData = static_cast<long>(now - firmwareLastData);
         if (firmwareRequest != nullptr && sinceLastData > static_cast<long>(FIRMWARE_UPLOAD_STALL_MS)) {
             ESP_LOGW("WebUIPlugin", "Firmware upload stalled, cancelling it");
-            firmwareUpload.abort();
+            if (firmwareTargetsController) {
+                controllerFirmwareUpload.abort();
+            } else {
+                firmwareUpload.abort();
+            }
             firmwareRequest = nullptr;
             firmwareUploadRunning = false;
             firmwareEndEventPending = true;
         }
+        startController = stagedControllerUpdatePending;
+        stagedControllerUpdatePending = false;
         sendStart = firmwareStartEventPending;
         sendEnd = firmwareEndEventPending;
+        startComponent = firmwareTargetsController ? "controller" : "display";
         firmwareStartEventPending = false;
         firmwareEndEventPending = false;
         if (firmwareRestartPending && static_cast<long>(now - firmwareRestartAt) >= 0) {
@@ -1009,9 +1042,19 @@ void WebUIPlugin::serviceFirmwareUpload(unsigned long now) {
         }
     }
     if (sendStart) {
-        pluginManager->trigger("ota:update:start", "component", String("display"));
+        pluginManager->trigger("ota:update:start", "component", startComponent);
     }
     if (sendEnd) {
+        pluginManager->trigger("ota:update:end");
+    }
+    if (startController) {
+        // Blocks for the length of the BLE transfer, like the release-update path in loop(). The web server keeps
+        // serving from its own task, so the progress callbacks still reach the browser.
+        ESP_LOGI("WebUIPlugin", "Installing uploaded controller firmware over BLE");
+        const bool ok = ota->updateStagedController(controller->getClientController()->getClient());
+        if (!ok) {
+            ESP_LOGE("WebUIPlugin", "Uploaded controller firmware could not be installed");
+        }
         pluginManager->trigger("ota:update:end");
     }
     if (restart) {

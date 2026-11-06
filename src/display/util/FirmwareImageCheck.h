@@ -1,7 +1,11 @@
-// Streaming sanity check for an uploaded display firmware image. esp_ota_end proves an image is intact, but not that
-// it is meant for this board: the controller build is also a valid ESP32-S3 image, and both are named firmware.bin.
+// Streaming sanity check for an uploaded firmware image. esp_ota_end proves an image is intact, but not that it is
+// meant for the board it is about to be installed on: the display and controller builds are both valid ESP32-S3
+// images, and both are named firmware.bin.
+//
 // Every display build embeds its own release asset name (OTA_DISPLAY_FIRMWARE), which the controller, bootloader and
-// other display variant do not, so that string identifies the right build across firmware versions.
+// other display variant do not, so that string identifies the right build across firmware versions. A display upload
+// requires it; a controller upload forbids it, which is the mistake worth catching — a display image sent to the
+// controller over BLE would brick the board that cannot be reflashed without opening the machine.
 #pragma once
 
 #include <cstddef>
@@ -10,13 +14,19 @@
 
 class FirmwareImageCheck {
   public:
-    void begin(size_t total, size_t maxSize, const char *requiredMarker) {
+    enum class MarkerPolicy {
+        REQUIRED, // the image must carry the marker (installing display firmware on the display)
+        FORBIDDEN // the image must not carry it (installing controller firmware, which never does)
+    };
+
+    void begin(size_t total, size_t maxSize, const char *requiredMarker, MarkerPolicy markerPolicy = MarkerPolicy::REQUIRED) {
         expected = total;
         received = 0;
         marker = requiredMarker;
         markerLen = std::strlen(requiredMarker);
         matched = 0;
         markerFound = false;
+        policy = markerPolicy;
         problem = nullptr;
         if (markerLen == 0 || markerLen > MAX_MARKER) {
             problem = "Internal error: invalid firmware marker";
@@ -26,7 +36,8 @@ class FirmwareImageCheck {
         if (total == 0) {
             problem = "The file is empty";
         } else if (total > maxSize) {
-            problem = "The file is too large to be display firmware";
+            problem = policy == MarkerPolicy::REQUIRED ? "The file is too large to be display firmware"
+                                                       : "The file is too large to be controller firmware";
         }
     }
 
@@ -49,6 +60,11 @@ class FirmwareImageCheck {
                 return;
             }
             scanMarker(data[i]);
+            if (markerFound && policy == MarkerPolicy::FORBIDDEN) {
+                // Known as soon as it is seen, so the upload stops instead of draining a whole display image.
+                problem = "This is the display firmware file. Install the controller file (board-firmware.bin) here.";
+                return;
+            }
         }
         received += len;
         if (received > expected) {
@@ -64,7 +80,7 @@ class FirmwareImageCheck {
         if (problem == nullptr && received <= OFFSET_CHIP_ID + 1) {
             problem = "This is not a firmware image";
         }
-        if (problem == nullptr && !markerFound) {
+        if (problem == nullptr && policy == MarkerPolicy::REQUIRED && !markerFound) {
             problem = "This firmware is not for this machine's display board. Use the display firmware file.";
         }
         return problem == nullptr;
@@ -116,6 +132,7 @@ class FirmwareImageCheck {
     size_t markerLen = 0;
     size_t matched = 0;
     bool markerFound = false;
+    MarkerPolicy policy = MarkerPolicy::REQUIRED;
     const char *problem = nullptr;
     uint8_t failure[MAX_MARKER] = {};
 };

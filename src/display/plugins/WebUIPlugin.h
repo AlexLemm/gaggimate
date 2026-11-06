@@ -11,6 +11,7 @@
 #include <atomic>
 #include <mutex>
 #include <display/core/Plugin.h>
+#include <display/plugins/ControllerFirmwareUpload.h>
 #include <display/plugins/FirmwareUpload.h>
 #include <display/plugins/WebSocketHandler.h>
 #include <display/util/PsramAllocator.h>
@@ -96,6 +97,7 @@ class WebUIPlugin : public Plugin {
     // Guards everything firmware* below except the atomic. The request pointers are only ever compared.
     std::mutex firmwareMutex;
     FirmwareUpload firmwareUpload;
+    ControllerFirmwareUpload controllerFirmwareUpload;
     AsyncWebServerRequest *firmwareRequest = nullptr;
     AsyncWebServerRequest *firmwareRejectedRequest = nullptr;
     const char *firmwareRejectReason = "";
@@ -104,6 +106,10 @@ class WebUIPlugin : public Plugin {
     bool firmwareRestartPending = false;
     bool firmwareStartEventPending = false;
     bool firmwareEndEventPending = false;
+    // Which board the upload in progress is for. A display image reboots this board when it lands; a controller image
+    // is handed to ControllerOTA from loop(), because streaming it over BLE must not run on the web server's task.
+    bool firmwareTargetsController = false;
+    bool stagedControllerUpdatePending = false;
     std::atomic<bool> firmwareUploadRunning{false};
 };
 

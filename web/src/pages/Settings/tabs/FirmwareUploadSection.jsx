@@ -9,7 +9,8 @@ const RESTART_TIMEOUT_MS = 90000;
 export function FirmwareUploadSection() {
   const { t } = useLingui();
   const [file, setFile] = useState(null);
-  const [state, setState] = useState('idle'); // idle | uploading | restarting | timeout
+  const [target, setTarget] = useState('display'); // display | controller
+  const [state, setState] = useState('idle'); // idle | uploading | restarting | timeout | installing
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const inputRef = useRef();
@@ -55,7 +56,7 @@ export function FirmwareUploadSection() {
     // XMLHttpRequest because fetch cannot report upload progress.
     const xhr = new XMLHttpRequest();
     xhrRef.current = xhr;
-    xhr.open('POST', '/api/firmware/upload');
+    xhr.open('POST', `/api/firmware/upload?target=${target}`);
     // A custom header makes browsers ask permission first, which stops other websites posting firmware here.
     xhr.setRequestHeader('X-GaggiMate-Firmware', '1');
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
@@ -64,18 +65,23 @@ export function FirmwareUploadSection() {
     };
     xhr.onload = () => {
       if (xhr.status === 200) {
-        waitForRestart();
+        // A display image reboots this board; a controller image is streamed on over Bluetooth while the display
+        // keeps running, so there is nothing to wait for coming back.
+        if (target === 'controller') setState('installing');
+        else waitForRestart();
       } else {
         setError(xhr.responseText || t`The machine rejected this file.`);
         setState('idle');
       }
     };
     xhr.onerror = () => {
-      setError(t`The connection was lost during the upload. The machine kept its current firmware.`);
+      setError(
+        t`The connection was lost during the upload. The machine kept its current firmware.`,
+      );
       setState('idle');
     };
     xhr.send(file);
-  }, [file, t, waitForRestart]);
+  }, [file, t, target, waitForRestart]);
 
   const busy = state !== 'idle';
 
@@ -84,10 +90,36 @@ export function FirmwareUploadSection() {
       <div className='space-y-4'>
         <p className='text-base-content/70 text-sm'>
           <Trans>
-            Install a display firmware file (.bin) from this computer over Wi-Fi. This also lets you
-            go back to an earlier version. Controller firmware cannot be installed here.
+            Install a firmware file (.bin) from this computer over Wi-Fi, on either board. This also
+            lets you go back to an earlier version. Controller firmware travels on to the controller
+            over Bluetooth, so no cable is needed for it either.
           </Trans>
         </p>
+
+        <div className='flex gap-4' role='radiogroup' aria-label={t`Board`}>
+          {[
+            { value: 'display', label: t`Display`, hint: 'display-firmware.bin' },
+            { value: 'controller', label: t`Controller`, hint: 'board-firmware.bin' },
+          ].map(option => (
+            <label key={option.value} className='flex cursor-pointer items-center gap-2'>
+              <input
+                type='radio'
+                name='firmwareTarget'
+                className='radio radio-primary'
+                value={option.value}
+                checked={target === option.value}
+                disabled={busy}
+                onChange={() => {
+                  setError('');
+                  setTarget(option.value);
+                }}
+              />
+              <span className='text-sm'>
+                {option.label} <span className='text-base-content/50'>({option.hint})</span>
+              </span>
+            </label>
+          ))}
+        </div>
 
         <input
           ref={inputRef}
@@ -114,6 +146,16 @@ export function FirmwareUploadSection() {
             <div className='text-sm'>
               <Trans>Uploading: {progress}%. Keep this page open.</Trans>
             </div>
+          </div>
+        )}
+        {state === 'installing' && (
+          <div className='alert alert-success' role='status'>
+            <span>
+              <Trans>
+                Firmware sent. The machine is installing it on the controller over Bluetooth, which
+                takes a few minutes. Leave the machine powered on until it finishes.
+              </Trans>
+            </span>
           </div>
         )}
         {state === 'restarting' && (

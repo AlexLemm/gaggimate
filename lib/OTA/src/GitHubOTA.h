@@ -30,6 +30,9 @@ class GitHubOTA {
     bool isUpdateAvailable(bool controller = false) const;
     String getCurrentVersion() const;
     void update(bool controller = true, bool display = true, NimBLEClient *client = nullptr);
+    // Installs a controller image uploaded from the web UI and already staged in LittleFS, skipping the release lookup
+    // and the download. Returns false if the controller is unreachable or the staged file is gone.
+    bool updateStagedController(NimBLEClient *client);
     void setReleaseUrl(const String &release_url);
     void setControllerVersion(const String &controller_version);
 

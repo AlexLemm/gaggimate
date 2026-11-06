@@ -139,6 +139,8 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
 
 void GitHubOTA::setReleaseUrl(const String &release_url) { this->_release_url = release_url; }
 
+bool GitHubOTA::updateStagedController(NimBLEClient *client) { return _controller_ota.updateStaged(client); }
+
 bool GitHubOTA::flashDisplayFirmware(const String &url) {
     const char *TAG = "flashDisplayFirmware";
     ESP_LOGI(TAG, "Download URL: %s", url.c_str());

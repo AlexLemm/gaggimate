@@ -29,8 +29,11 @@ class ControllerOTA {
     void init(const ctr_progress_callback_t &progress_callback);
 
     bool update(NimBLEClient *client, const String &release_url);
+    // Installs an image already staged at CONTROLLER_FIRMWARE_PATH instead of downloading one.
+    bool updateStaged(NimBLEClient *client);
 
   private:
+    bool installStagedFile();
     bool resolveCharacteristics();
     bool downloadFile(const String &release_url);
     bool runUpdate(Stream &in, uint32_t size);

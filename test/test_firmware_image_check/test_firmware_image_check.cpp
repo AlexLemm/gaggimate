@@ -27,7 +27,48 @@ static bool checkInChunks(const std::vector<uint8_t> &bytes, size_t chunk) {
     return check.complete();
 }
 
+// A controller upload runs the same scan inverted: the display marker must be absent.
+static bool checkAsControllerImage(const std::vector<uint8_t> &bytes, size_t chunk) {
+    FirmwareImageCheck check;
+    check.begin(bytes.size(), MAX_SIZE, MARKER, FirmwareImageCheck::MarkerPolicy::FORBIDDEN);
+    for (size_t i = 0; i < bytes.size(); i += chunk) {
+        check.feed(bytes.data() + i, std::min(chunk, bytes.size() - i));
+    }
+    return check.complete();
+}
+
 void test_accepts_display_image() { TEST_ASSERT_TRUE(checkInChunks(image("xx display-firmware.bin yy"), 4096)); }
+
+void test_controller_upload_accepts_an_image_without_the_display_marker() {
+    TEST_ASSERT_TRUE(checkAsControllerImage(image("GaggiMateController"), 4096));
+}
+
+// The mistake that matters: a display image streamed onto the controller would brick the board that cannot be
+// reflashed without opening the machine.
+void test_controller_upload_rejects_the_display_image() {
+    TEST_ASSERT_FALSE(checkAsControllerImage(image("xx display-firmware.bin yy"), 4096));
+    for (size_t chunk = 1; chunk < 32; chunk++) {
+        TEST_ASSERT_FALSE_MESSAGE(checkAsControllerImage(image("xx display-firmware.bin yy"), chunk),
+                                  "display marker missed across a chunk boundary");
+    }
+}
+
+// Rejected as soon as the marker is seen, rather than after draining a whole 3.8 MB image.
+void test_controller_upload_fails_before_the_upload_ends() {
+    const auto bytes = image("display-firmware.bin and a great deal more content after it");
+    FirmwareImageCheck check;
+    check.begin(bytes.size(), MAX_SIZE, MARKER, FirmwareImageCheck::MarkerPolicy::FORBIDDEN);
+    check.feed(bytes.data(), 40); // enough to cover the header and the marker, not the rest
+    TEST_ASSERT_TRUE(check.failed());
+}
+
+void test_controller_upload_still_checks_format_and_size() {
+    TEST_ASSERT_FALSE(checkAsControllerImage(image("controller", 0x00), 4096)); // not a firmware image
+    TEST_ASSERT_FALSE(checkAsControllerImage(image("controller", 0xE9, 5), 4096));
+    FirmwareImageCheck check;
+    check.begin(MAX_SIZE + 1, MAX_SIZE, MARKER, FirmwareImageCheck::MarkerPolicy::FORBIDDEN);
+    TEST_ASSERT_TRUE(check.failed());
+}
 
 void test_accepts_whatever_the_chunk_boundaries() {
     const auto bytes = image("xx display-firmware.bin yy");
@@ -76,6 +117,10 @@ void test_rejects_file_shorter_than_header() {
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_accepts_display_image);
+    RUN_TEST(test_controller_upload_accepts_an_image_without_the_display_marker);
+    RUN_TEST(test_controller_upload_rejects_the_display_image);
+    RUN_TEST(test_controller_upload_fails_before_the_upload_ends);
+    RUN_TEST(test_controller_upload_still_checks_format_and_size);
     RUN_TEST(test_accepts_whatever_the_chunk_boundaries);
     RUN_TEST(test_finds_marker_after_a_false_start);
     RUN_TEST(test_rejects_other_builds);
