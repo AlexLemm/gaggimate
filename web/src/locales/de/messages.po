@@ -55,6 +55,18 @@ msgstr "{0, plural, one {# Profil} other {# Profile}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, one {# Shot} other {# Shots}}"
 
+#. placeholder {0}: (debtJ / 1000).toFixed(1)
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "{0} kJ of measured debt outstanding"
+msgstr ""
+
+#. placeholder {0}: Math.round(watts)
+#. placeholder {1}: Math.round(capacity)
+#. placeholder {2}: Math.round(num(formData.inletWaterTemp))
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "{0} W element, {1} J/K boiler, {2} °C inlet water."
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, one {# Kandidat} other {# Kandidaten}}"
@@ -1317,6 +1329,10 @@ msgstr "Differenz"
 msgid "Disable compare mode"
 msgstr "Vergleichsmodus deaktivieren"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Disabled — the cap is 0."
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/index.jsx
 msgid "Discard"
@@ -1416,6 +1432,10 @@ msgstr "Ziehen bei Suchergebnissen deaktiviert"
 msgid "Drag to reorder"
 msgstr "Zum Sortieren ziehen"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Drawing now"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
 msgstr "Shot- oder Profil-JSON hier ablegen"
@@ -1510,6 +1530,11 @@ msgstr "Zeitraumfilter bearbeiten"
 msgid "Edit profile"
 msgstr "Profil bearbeiten"
 
+#. placeholder {0}: heaterDuty.toFixed(0)
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Element at {0} %"
+msgstr ""
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
 msgstr "Leerer Datumsausdruck."
@@ -1565,6 +1590,10 @@ msgstr "Aktiviert den Kompaktmodus für dieses Panel"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "End date"
 msgstr "Enddatum"
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Energy since boot"
+msgstr ""
 
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgctxt "keyboard key"
@@ -1634,9 +1663,17 @@ msgstr "Fehler"
 msgid "estimated flow"
 msgstr "geschätzter Durchfluss"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Estimated from the duties the firmware commands and the ratings measured at the plug, not from a current sensor. The element is 94 % of a full-load draw and its duty is known exactly, so the total is good to a few per cent; the pump term is a linear approximation worth 59 W at most."
+msgstr ""
+
 #: src/utils/metricDefinitions.js
 msgid "Estimated Output"
 msgstr "Geschätzte Ausbeute"
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Estimated power"
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Even fill"
@@ -1645,6 +1682,14 @@ msgstr "Gleichmäßig füllen"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Every"
 msgstr "Alle"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Everything above uses these numbers, plus the element wattage taken from the feedforward gain (Kff) on the Machine tab — one number to get right, so the bank, the recovery, the live model and the power estimate cannot disagree about it. Set Kff to 1000 divided by the wattage you measure at the plug."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Everything, idle included"
+msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Examples"
@@ -1975,6 +2020,10 @@ msgstr "Allgemein"
 msgid "General Settings"
 msgstr "Allgemeine Einstellungen"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Getting the heat capacity roughly right matters more than getting it exactly right: it only scales how much a given energy gap is worth in degrees. To measure it rather than guess, run tools/shotsim over a few of your own shot logs — it fits the model with a Kalman filter and prints the value to put here."
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
 msgstr "GIF-Bilder werden nicht unterstützt. Bitte verwende PNG, JPEG, WebP oder BMP."
@@ -2043,7 +2092,7 @@ msgid "Hardware Scale"
 msgstr "Hardware-Waage"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
-msgid "Heat capacity of boiler, group and water. Larger values bank less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
+msgid "Heat capacity of boiler, group and water. Larger values compensate less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
 msgstr ""
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
@@ -2312,6 +2361,10 @@ msgstr "Ausgewähltes Profil beibehalten"
 msgid "Keep this window focused while the replay is being recorded."
 msgstr "Lass dieses Fenster im Fokus, während das Replay aufgezeichnet wird."
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Keeping up"
+msgstr ""
+
 #: src/app/MachineSetup.jsx
 msgid "Kitchen"
 msgstr "Küche"
@@ -2386,6 +2439,10 @@ msgstr "Live-Verbindung fehlgeschlagen ({reason})"
 msgid "Live Metrics"
 msgstr "Live-Metriken"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Live Model & Power Estimate"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Load a profile to open statistics"
 msgstr "Lade ein Profil, um die Statistiken zu öffnen"
@@ -2450,6 +2507,10 @@ msgstr "Längste Serie:"
 msgid "Looking for machines… If yours doesn't show up, add it by its address."
 msgstr "Suche nach Maschinen… Falls deine nicht erscheint, füge sie über ihre Adresse hinzu."
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Losing heat faster than the element can replace it"
+msgstr ""
+
 #: src/pages/ShotHistory/index.jsx
 msgid "Lowest ID first"
 msgstr "Niedrigste ID zuerst"
@@ -2500,6 +2561,10 @@ msgstr "Maschine vorgeheizt"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Machine Settings"
 msgstr "Maschineneinstellungen"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Machine Thermal Model"
+msgstr ""
 
 #: src/app/AppSettings.jsx
 #: src/app/MachineSwitcher.jsx
@@ -2606,6 +2671,10 @@ msgstr "Maximaler Druck (0 = ignorieren)"
 msgid "Maximum Pump Power (0 - 1)"
 msgstr "Maximale Pumpenleistung (0 - 1)"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Measured"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."
 msgstr "MediaRecorder wird in diesem Browser nicht unterstützt."
@@ -2661,6 +2730,22 @@ msgstr "Modus"
 msgid "Mode Selector"
 msgstr "Modusauswahl"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Model sensor"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Model vs Machine"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Model water"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Model water is the one to watch: no machine can measure it, because the sensor sits outside the boiler and lags it by seconds. During a shot the water is already several degrees down while the sensor has barely moved, which is why the PID reacts too late."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Momentary Buttons"
 msgstr "Taster"
@@ -2685,7 +2770,11 @@ msgid "More options"
 msgstr "Weitere Optionen"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
-msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it. Needs the feedforward gain set on the Machine tab, which is where the element wattage comes from."
+msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Most the boiler may sit above the setpoint while it pays measured energy back. 0 disables it."
 msgstr ""
 
 #: src/pages/ProfileList/index.jsx
@@ -2764,6 +2853,14 @@ msgstr "Name für neue Voreinstellung:"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Name..."
 msgstr "Name..."
+
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "Needs setup"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Net into boiler"
+msgstr ""
 
 #: src/services/VisualizerService.js
 msgid "Network error: Unable to connect to visualizer.coffee"
@@ -2956,6 +3053,10 @@ msgstr "Nicht aufgezeichnet"
 msgid "Notes"
 msgstr "Notizen"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Nothing outstanding; the PID owns the temperature"
+msgstr ""
+
 #: src/app/AppSettings.jsx
 msgid "Notifications"
 msgstr "Benachrichtigungen"
@@ -2968,11 +3069,19 @@ msgstr "Benachrichtigungen sind blockiert. Erlaube sie für GaggiMate in den Ein
 msgid "Now Brewing"
 msgstr "Bezug läuft"
 
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "Off"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
 msgid "Off"
 msgstr "Aus"
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Offset applied"
+msgstr ""
 
 #: src/app/FirmwareWarning.jsx
 msgid "Old firmware"
@@ -2981,6 +3090,10 @@ msgstr "Alte Firmware"
 #: src/pages/ShotHistory/index.jsx
 msgid "Oldest First"
 msgstr "Älteste zuerst"
+
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "On"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "On startup (s)"
@@ -3106,6 +3219,10 @@ msgstr "Pausieren"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Pause replay"
 msgstr "Replay pausieren"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Paying measured energy back above the setpoint until the boiler is square."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
@@ -3259,6 +3376,10 @@ msgstr "Plugins"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG, JPEG, WebP oder BMP. GIFs werden nicht unterstützt. Das Bild wird für das Display quadratisch zugeschnitten und auf 300×300 Pixel skaliert."
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Power"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3620,6 +3741,7 @@ msgstr "Pumpe aus"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
 #: src/utils/metricDefinitions.js
 msgid "Pump Power"
 msgstr "Pumpenleistung"
@@ -4235,6 +4357,10 @@ msgstr "Auf 0 setzen, um die Vorsteuerung zu deaktivieren."
 msgid "Set to current measurement: {distance}mm"
 msgstr "Auf aktuellen Messwert setzen: {distance}mm"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Setpoint"
+msgstr ""
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Sets the height of the profile chart preview shown in the Profile Selector panel."
 msgstr "Legt die Höhe der Profildiagramm-Vorschau im Panel Profilauswahl fest."
@@ -4670,6 +4796,10 @@ msgstr "Durchschnittswerte der Statistikdiagramme"
 msgid "Statistics Search DSL"
 msgstr "Statistik-Such-DSL"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Status"
+msgstr ""
+
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "Std.-Abw."
@@ -5091,6 +5221,10 @@ msgstr "Die Datei enthält keine bekannten Einstellungen."
 msgid "The file does not contain a settings object."
 msgstr "Die Datei enthält kein Einstellungsobjekt."
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The firmware runs the same boiler model the compensations reason about alongside the real boiler, stepped from its own state and never corrected from the sensor. Where the traces part company, the model's parameters are wrong — and since the bank and the recovery size themselves from those parameters, a model that runs hot and a bank that comes out too large are the same fact seen twice."
+msgstr ""
+
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The firmware was installed, but the machine has not come back yet. If it stays unreachable, check its screen, then reinstall over USB."
 msgstr ""
@@ -5109,6 +5243,10 @@ msgstr "Die Maschine ist seit 5 Minuten im Dampfmodus."
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The machine rejected this file."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The other half of the same problem, measured instead of predicted. The machine counts the water the pump actually moves, works out the heat it carried out of the boiler, subtracts what the element has already put back, and holds the boiler above its setpoint until that balance is square. The element runs flat out while the gap is large and eases off as it closes, so control hands back to the PID without a step."
 msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
@@ -5144,6 +5282,10 @@ msgstr ""
 msgid "Thermal Feedforward Gain"
 msgstr "Thermische Vorsteuerungsverstärkung"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Thermal Recovery"
+msgstr ""
+
 #: src/app/machines.js
 msgid "this address is not a GaggiMate"
 msgstr "diese Adresse ist kein GaggiMate"
@@ -5163,6 +5305,10 @@ msgstr "Diese Funktion ermöglicht die Verbindung mit einer Home-Assistant- oder
 #: src/pages/Settings/PluginCard.jsx
 msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
 msgstr "Diese Funktion steuert eine Tasmota-Steckdose, um deine Mühle nach Erreichen des Ziels auszuschalten."
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "This is what recovers the bloom and the pause after a shot, and it works on a flush too. Start at 2 °C. Unlike the bank it needs no profile, so it also covers shots that run longer or pull more water than planned."
+msgstr ""
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
@@ -5641,6 +5787,14 @@ msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "M"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Waiting above the brew setpoint, released when the shot starts."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Waiting for the model to start. It needs the element wattage (Kff on the Machine tab) and a boiler heat capacity, then begins the moment the machine is heating."
+msgstr ""
+
 #: src/utils/warnings.js
 msgctxt "warning level"
 msgid "Warn"
@@ -5795,9 +5949,17 @@ msgstr "Gewicht erreicht"
 msgid "Weight Stop"
 msgstr "Gewichtsstopp"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "What is running right now. Nothing here changes the machine; the settings below do."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "Mit wie viel Prozent die Pumpe beim Dampfen laufen soll"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "What the pump draws at full drive, measured at the plug. Only feeds the power estimate; it changes nothing about how the machine runs. 59 W on a Rancilio Silvia."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

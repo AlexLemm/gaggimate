@@ -55,6 +55,18 @@ msgstr "{0, plural, other {# プロファイル}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, other {# ショット}}"
 
+#. placeholder {0}: (debtJ / 1000).toFixed(1)
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "{0} kJ of measured debt outstanding"
+msgstr ""
+
+#. placeholder {0}: Math.round(watts)
+#. placeholder {1}: Math.round(capacity)
+#. placeholder {2}: Math.round(num(formData.inletWaterTemp))
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "{0} W element, {1} J/K boiler, {2} °C inlet water."
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 件の候補}}"
@@ -1317,6 +1329,10 @@ msgstr "差分"
 msgid "Disable compare mode"
 msgstr "比較モードを無効にする"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Disabled — the cap is 0."
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/index.jsx
 msgid "Discard"
@@ -1416,6 +1432,10 @@ msgstr "検索結果ではドラッグできません"
 msgid "Drag to reorder"
 msgstr "ドラッグして並べ替え"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Drawing now"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
 msgstr "ショットまたはプロファイルの JSON をここにドロップ"
@@ -1510,6 +1530,11 @@ msgstr "期間フィルターを編集"
 msgid "Edit profile"
 msgstr "プロファイルを編集"
 
+#. placeholder {0}: heaterDuty.toFixed(0)
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Element at {0} %"
+msgstr ""
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
 msgstr "日付の式が空です。"
@@ -1565,6 +1590,10 @@ msgstr "このパネルのコンパクトモードを有効にします"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "End date"
 msgstr "終了日"
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Energy since boot"
+msgstr ""
 
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgctxt "keyboard key"
@@ -1634,9 +1663,17 @@ msgstr "エラー"
 msgid "estimated flow"
 msgstr "推定流量"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Estimated from the duties the firmware commands and the ratings measured at the plug, not from a current sensor. The element is 94 % of a full-load draw and its duty is known exactly, so the total is good to a few per cent; the pump term is a linear approximation worth 59 W at most."
+msgstr ""
+
 #: src/utils/metricDefinitions.js
 msgid "Estimated Output"
 msgstr "推定抽出量"
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Estimated power"
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Even fill"
@@ -1645,6 +1682,14 @@ msgstr "均等に埋める"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Every"
 msgstr "毎"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Everything above uses these numbers, plus the element wattage taken from the feedforward gain (Kff) on the Machine tab — one number to get right, so the bank, the recovery, the live model and the power estimate cannot disagree about it. Set Kff to 1000 divided by the wattage you measure at the plug."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Everything, idle included"
+msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Examples"
@@ -1975,6 +2020,10 @@ msgstr "一般"
 msgid "General Settings"
 msgstr "一般設定"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Getting the heat capacity roughly right matters more than getting it exactly right: it only scales how much a given energy gap is worth in degrees. To measure it rather than guess, run tools/shotsim over a few of your own shot logs — it fits the model with a Kalman filter and prints the value to put here."
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
 msgstr "GIF 画像には対応していません。PNG、JPEG、WebP、BMP を使用してください。"
@@ -2043,7 +2092,7 @@ msgid "Hardware Scale"
 msgstr "ハードウェアスケール"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
-msgid "Heat capacity of boiler, group and water. Larger values bank less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
+msgid "Heat capacity of boiler, group and water. Larger values compensate less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
 msgstr ""
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
@@ -2312,6 +2361,10 @@ msgstr "選択中のプロファイルを維持"
 msgid "Keep this window focused while the replay is being recorded."
 msgstr "リプレイの録画中はこのウィンドウを前面に表示したままにしてください。"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Keeping up"
+msgstr ""
+
 #: src/app/MachineSetup.jsx
 msgid "Kitchen"
 msgstr "キッチン"
@@ -2386,6 +2439,10 @@ msgstr "ライブ接続に失敗しました（{reason}）"
 msgid "Live Metrics"
 msgstr "ライブメトリクス"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Live Model & Power Estimate"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Load a profile to open statistics"
 msgstr "統計を開くにはプロファイルを読み込んでください"
@@ -2450,6 +2507,10 @@ msgstr "最長連続記録:"
 msgid "Looking for machines… If yours doesn't show up, add it by its address."
 msgstr "マシンを検索中… 表示されない場合は、アドレスで追加してください。"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Losing heat faster than the element can replace it"
+msgstr ""
+
 #: src/pages/ShotHistory/index.jsx
 msgid "Lowest ID first"
 msgstr "ID の小さい順"
@@ -2500,6 +2561,10 @@ msgstr "マシンの予熱が完了しました"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Machine Settings"
 msgstr "マシン設定"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Machine Thermal Model"
+msgstr ""
 
 #: src/app/AppSettings.jsx
 #: src/app/MachineSwitcher.jsx
@@ -2606,6 +2671,10 @@ msgstr "最大圧力（0 = 無視）"
 msgid "Maximum Pump Power (0 - 1)"
 msgstr "最大ポンプ出力（0 - 1）"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Measured"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."
 msgstr "このブラウザーは MediaRecorder に対応していません。"
@@ -2661,6 +2730,22 @@ msgstr "モード"
 msgid "Mode Selector"
 msgstr "モード選択"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Model sensor"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Model vs Machine"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Model water"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Model water is the one to watch: no machine can measure it, because the sensor sits outside the boiler and lags it by seconds. During a shot the water is already several degrees down while the sensor has barely moved, which is why the PID reacts too late."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Momentary Buttons"
 msgstr "モメンタリーボタン"
@@ -2685,7 +2770,11 @@ msgid "More options"
 msgstr "その他のオプション"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
-msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it. Needs the feedforward gain set on the Machine tab, which is where the element wattage comes from."
+msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Most the boiler may sit above the setpoint while it pays measured energy back. 0 disables it."
 msgstr ""
 
 #: src/pages/ProfileList/index.jsx
@@ -2764,6 +2853,14 @@ msgstr "新しいプリセットの名前:"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Name..."
 msgstr "名前..."
+
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "Needs setup"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Net into boiler"
+msgstr ""
 
 #: src/services/VisualizerService.js
 msgid "Network error: Unable to connect to visualizer.coffee"
@@ -2956,6 +3053,10 @@ msgstr "記録なし"
 msgid "Notes"
 msgstr "メモ"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Nothing outstanding; the PID owns the temperature"
+msgstr ""
+
 #: src/app/AppSettings.jsx
 msgid "Notifications"
 msgstr "通知"
@@ -2968,11 +3069,19 @@ msgstr "通知がブロックされています。スマートフォンの設定
 msgid "Now Brewing"
 msgstr "抽出中"
 
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "Off"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
 msgid "Off"
 msgstr "オフ"
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Offset applied"
+msgstr ""
 
 #: src/app/FirmwareWarning.jsx
 msgid "Old firmware"
@@ -2981,6 +3090,10 @@ msgstr "古いファームウェア"
 #: src/pages/ShotHistory/index.jsx
 msgid "Oldest First"
 msgstr "古い順"
+
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "On"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "On startup (s)"
@@ -3106,6 +3219,10 @@ msgstr "一時停止"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Pause replay"
 msgstr "リプレイを一時停止"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Paying measured energy back above the setpoint until the boiler is square."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
@@ -3259,6 +3376,10 @@ msgstr "プラグイン"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG、JPEG、WebP、BMP に対応しています。GIF には対応していません。画像は正方形に切り抜かれ、ディスプレイ用に 300×300 ピクセルに縮小されます。"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Power"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3620,6 +3741,7 @@ msgstr "ポンプ停止"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
 #: src/utils/metricDefinitions.js
 msgid "Pump Power"
 msgstr "ポンプ出力"
@@ -4235,6 +4357,10 @@ msgstr "0 に設定するとフィードフォワード制御が無効になり�
 msgid "Set to current measurement: {distance}mm"
 msgstr "現在の測定値に設定: {distance}mm"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Setpoint"
+msgstr ""
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Sets the height of the profile chart preview shown in the Profile Selector panel."
 msgstr "プロファイル選択パネルに表示するプロファイルチャートのプレビューの高さを設定します。"
@@ -4670,6 +4796,10 @@ msgstr "統計チャートの平均"
 msgid "Statistics Search DSL"
 msgstr "統計検索 DSL"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Status"
+msgstr ""
+
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "標準偏差"
@@ -5091,6 +5221,10 @@ msgstr "ファイルに既知の設定が含まれていません。"
 msgid "The file does not contain a settings object."
 msgstr "ファイルに設定オブジェクトが含まれていません。"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The firmware runs the same boiler model the compensations reason about alongside the real boiler, stepped from its own state and never corrected from the sensor. Where the traces part company, the model's parameters are wrong — and since the bank and the recovery size themselves from those parameters, a model that runs hot and a bank that comes out too large are the same fact seen twice."
+msgstr ""
+
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The firmware was installed, but the machine has not come back yet. If it stays unreachable, check its screen, then reinstall over USB."
 msgstr ""
@@ -5109,6 +5243,10 @@ msgstr "マシンが 5 分間スチームモードのままです。"
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The machine rejected this file."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The other half of the same problem, measured instead of predicted. The machine counts the water the pump actually moves, works out the heat it carried out of the boiler, subtracts what the element has already put back, and holds the boiler above its setpoint until that balance is square. The element runs flat out while the gap is large and eases off as it closes, so control hands back to the PID without a step."
 msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
@@ -5144,6 +5282,10 @@ msgstr ""
 msgid "Thermal Feedforward Gain"
 msgstr "熱フィードフォワードゲイン"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Thermal Recovery"
+msgstr ""
+
 #: src/app/machines.js
 msgid "this address is not a GaggiMate"
 msgstr "このアドレスは GaggiMate ではありません"
@@ -5163,6 +5305,10 @@ msgstr "この機能は Home Assistant または MQTT に接続し、現在の�
 #: src/pages/Settings/PluginCard.jsx
 msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
 msgstr "この機能は Tasmota プラグを制御し、目標に達した後にグラインダーをオフにします。"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "This is what recovers the bloom and the pause after a shot, and it works on a flush too. Start at 2 °C. Unlike the bank it needs no profile, so it also covers shots that run longer or pull more water than planned."
+msgstr ""
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
@@ -5641,6 +5787,14 @@ msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "水"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Waiting above the brew setpoint, released when the shot starts."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Waiting for the model to start. It needs the element wattage (Kff on the Machine tab) and a boiler heat capacity, then begins the moment the machine is heating."
+msgstr ""
+
 #: src/utils/warnings.js
 msgctxt "warning level"
 msgid "Warn"
@@ -5795,9 +5949,17 @@ msgstr "重量に到達"
 msgid "Weight Stop"
 msgstr "重量で停止"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "What is running right now. Nothing here changes the machine; the settings below do."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "スチーム中にポンプを動かす割合（%）"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "What the pump draws at full drive, measured at the plug. Only feeds the power estimate; it changes nothing about how the machine runs. 59 W on a Rancilio Silvia."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

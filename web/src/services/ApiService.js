@@ -229,6 +229,16 @@ export default class ApiService {
     map('tof', 'tofDistance', v => v || 0);
     map('pw', 'currentPumpPower', v => v ?? 0);
     map('hp', 'currentBoilerPower', v => v ?? 0);
+    // Experimental observers (see src/display/util/BoilerObserver.h and PowerEstimate.h). Zero when the feature has
+    // nothing to report, so a chart reading them renders an empty series rather than failing.
+    map('mt', 'modelTemperature', v => v ?? 0);
+    map('mbt', 'modelBoilerTemperature', v => v ?? 0);
+    map('mnp', 'modelNetPower', v => v ?? 0);
+    map('ew', 'estimatedPower', v => v ?? 0);
+    map('ewh', 'estimatedEnergyWh', v => v ?? 0);
+    map('trd', 'thermalRecoveryDebt', v => v ?? 0);
+    map('tro', 'thermalRecoveryOffset', v => v ?? 0);
+    map('tbo', 'thermalBankOffset', v => v ?? 0);
     map('pkr', 'currentPuckResistance', v => v ?? 0);
     map('pf', 'currentPuckFlow', v => v ?? 0);
     map('cv', 'currentCoffeeVolume', v => v ?? 0);
@@ -308,6 +318,14 @@ export const createMachineState = () =>
       currentSteamTemperature: 0,
       targetSteamTemperature: 0,
       currentFlow: 0,
+      modelTemperature: 0,
+      modelBoilerTemperature: 0,
+      modelNetPower: 0,
+      estimatedPower: 0,
+      estimatedEnergyWh: 0,
+      thermalRecoveryDebt: 0,
+      thermalRecoveryOffset: 0,
+      thermalBankOffset: 0,
       targetFlow: 0,
       mode: 0,
       selectedProfile: '',

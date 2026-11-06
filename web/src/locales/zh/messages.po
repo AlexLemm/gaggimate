@@ -55,6 +55,18 @@ msgstr "{0, plural, other {# 条曲线}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, other {# 次萃取}}"
 
+#. placeholder {0}: (debtJ / 1000).toFixed(1)
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "{0} kJ of measured debt outstanding"
+msgstr ""
+
+#. placeholder {0}: Math.round(watts)
+#. placeholder {1}: Math.round(capacity)
+#. placeholder {2}: Math.round(num(formData.inletWaterTemp))
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "{0} W element, {1} J/K boiler, {2} °C inlet water."
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 个候选}}"
@@ -1317,6 +1329,10 @@ msgstr "差值"
 msgid "Disable compare mode"
 msgstr "关闭对比模式"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Disabled — the cap is 0."
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/index.jsx
 msgid "Discard"
@@ -1416,6 +1432,10 @@ msgstr "搜索结果中无法拖动"
 msgid "Drag to reorder"
 msgstr "拖动以排序"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Drawing now"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
 msgstr "将萃取或曲线 JSON 拖放到此处"
@@ -1510,6 +1530,11 @@ msgstr "编辑日期范围筛选"
 msgid "Edit profile"
 msgstr "编辑曲线"
 
+#. placeholder {0}: heaterDuty.toFixed(0)
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Element at {0} %"
+msgstr ""
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
 msgstr "日期表达式为空。"
@@ -1565,6 +1590,10 @@ msgstr "为此面板启用紧凑模式"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "End date"
 msgstr "结束日期"
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Energy since boot"
+msgstr ""
 
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgctxt "keyboard key"
@@ -1634,9 +1663,17 @@ msgstr "错误"
 msgid "estimated flow"
 msgstr "估算流量"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Estimated from the duties the firmware commands and the ratings measured at the plug, not from a current sensor. The element is 94 % of a full-load draw and its duty is known exactly, so the total is good to a few per cent; the pump term is a linear approximation worth 59 W at most."
+msgstr ""
+
 #: src/utils/metricDefinitions.js
 msgid "Estimated Output"
 msgstr "估算出液量"
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Estimated power"
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Even fill"
@@ -1645,6 +1682,14 @@ msgstr "均匀填充"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Every"
 msgstr "每"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Everything above uses these numbers, plus the element wattage taken from the feedforward gain (Kff) on the Machine tab — one number to get right, so the bank, the recovery, the live model and the power estimate cannot disagree about it. Set Kff to 1000 divided by the wattage you measure at the plug."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Everything, idle included"
+msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Examples"
@@ -1975,6 +2020,10 @@ msgstr "常规"
 msgid "General Settings"
 msgstr "常规设置"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Getting the heat capacity roughly right matters more than getting it exactly right: it only scales how much a given energy gap is worth in degrees. To measure it rather than guess, run tools/shotsim over a few of your own shot logs — it fits the model with a Kalman filter and prints the value to put here."
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
 msgstr "不支持 GIF 图片。请使用 PNG、JPEG、WebP 或 BMP。"
@@ -2043,7 +2092,7 @@ msgid "Hardware Scale"
 msgstr "硬件秤"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
-msgid "Heat capacity of boiler, group and water. Larger values bank less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
+msgid "Heat capacity of boiler, group and water. Larger values compensate less, so raise it if shots start too hot. Around 3500 suits a 300 ml brass boiler."
 msgstr ""
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
@@ -2312,6 +2361,10 @@ msgstr "保持所选曲线"
 msgid "Keep this window focused while the replay is being recorded."
 msgstr "录制回放时请保持此窗口处于焦点。"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Keeping up"
+msgstr ""
+
 #: src/app/MachineSetup.jsx
 msgid "Kitchen"
 msgstr "厨房"
@@ -2386,6 +2439,10 @@ msgstr "实时连接失败（{reason}）"
 msgid "Live Metrics"
 msgstr "实时指标"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Live Model & Power Estimate"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Load a profile to open statistics"
 msgstr "加载曲线以打开统计"
@@ -2450,6 +2507,10 @@ msgstr "最长连续天数："
 msgid "Looking for machines… If yours doesn't show up, add it by its address."
 msgstr "正在查找咖啡机… 如果你的咖啡机没有出现，请通过地址添加。"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Losing heat faster than the element can replace it"
+msgstr ""
+
 #: src/pages/ShotHistory/index.jsx
 msgid "Lowest ID first"
 msgstr "ID 从小到大"
@@ -2500,6 +2561,10 @@ msgstr "咖啡机已预热"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Machine Settings"
 msgstr "咖啡机设置"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Machine Thermal Model"
+msgstr ""
 
 #: src/app/AppSettings.jsx
 #: src/app/MachineSwitcher.jsx
@@ -2606,6 +2671,10 @@ msgstr "最大压力（0 = 忽略）"
 msgid "Maximum Pump Power (0 - 1)"
 msgstr "最大泵功率 (0 - 1)"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Measured"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "MediaRecorder is not supported in this browser."
 msgstr "此浏览器不支持 MediaRecorder。"
@@ -2661,6 +2730,22 @@ msgstr "模式"
 msgid "Mode Selector"
 msgstr "模式选择器"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Model sensor"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Model vs Machine"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Model water"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Model water is the one to watch: no machine can measure it, because the sensor sits outside the boiler and lags it by seconds. During a shot the water is already several degrees down while the sensor has barely moved, which is why the PID reacts too late."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Momentary Buttons"
 msgstr "自复位按钮"
@@ -2685,7 +2770,11 @@ msgid "More options"
 msgstr "更多选项"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
-msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it. Needs the feedforward gain set on the Machine tab, which is where the element wattage comes from."
+msgid "Most the boiler may sit above the brew setpoint while it waits. 0 disables it."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Most the boiler may sit above the setpoint while it pays measured energy back. 0 disables it."
 msgstr ""
 
 #: src/pages/ProfileList/index.jsx
@@ -2764,6 +2853,14 @@ msgstr "新预设名称："
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Name..."
 msgstr "名称..."
+
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "Needs setup"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Net into boiler"
+msgstr ""
 
 #: src/services/VisualizerService.js
 msgid "Network error: Unable to connect to visualizer.coffee"
@@ -2956,6 +3053,10 @@ msgstr "未记录"
 msgid "Notes"
 msgstr "备注"
 
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Nothing outstanding; the PID owns the temperature"
+msgstr ""
+
 #: src/app/AppSettings.jsx
 msgid "Notifications"
 msgstr "通知"
@@ -2968,11 +3069,19 @@ msgstr "通知已被阻止。请在手机设置中允许 GaggiMate 发送通知�
 msgid "Now Brewing"
 msgstr "正在冲煮"
 
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "Off"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
 msgid "Off"
 msgstr "关闭"
+
+#: src/pages/Settings/tabs/experimental/PowerPanel.jsx
+msgid "Offset applied"
+msgstr ""
 
 #: src/app/FirmwareWarning.jsx
 msgid "Old firmware"
@@ -2981,6 +3090,10 @@ msgstr "旧版固件"
 #: src/pages/ShotHistory/index.jsx
 msgid "Oldest First"
 msgstr "最早优先"
+
+#: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
+msgid "On"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "On startup (s)"
@@ -3106,6 +3219,10 @@ msgstr "暂停"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Pause replay"
 msgstr "暂停回放"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Paying measured energy back above the setpoint until the boiler is square."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
@@ -3259,6 +3376,10 @@ msgstr "插件"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG、JPEG、WebP 或 BMP。不支持 GIF。图片将被裁剪为正方形，并缩放为 300×300 像素用于显示屏。"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Power"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3620,6 +3741,7 @@ msgstr "泵关闭"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
 #: src/utils/metricDefinitions.js
 msgid "Pump Power"
 msgstr "泵功率"
@@ -4235,6 +4357,10 @@ msgstr "设为 0 以禁用前馈控制。"
 msgid "Set to current measurement: {distance}mm"
 msgstr "设为当前测量值：{distance}mm"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Setpoint"
+msgstr ""
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Sets the height of the profile chart preview shown in the Profile Selector panel."
 msgstr "设置曲线选择器面板中曲线图表预览的高度。"
@@ -4670,6 +4796,10 @@ msgstr "统计图表平均值"
 msgid "Statistics Search DSL"
 msgstr "统计搜索 DSL"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Status"
+msgstr ""
+
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "标准差"
@@ -5091,6 +5221,10 @@ msgstr "文件中不包含已知设置。"
 msgid "The file does not contain a settings object."
 msgstr "文件中不包含设置对象。"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The firmware runs the same boiler model the compensations reason about alongside the real boiler, stepped from its own state and never corrected from the sensor. Where the traces part company, the model's parameters are wrong — and since the bank and the recovery size themselves from those parameters, a model that runs hot and a bank that comes out too large are the same fact seen twice."
+msgstr ""
+
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The firmware was installed, but the machine has not come back yet. If it stays unreachable, check its screen, then reinstall over USB."
 msgstr ""
@@ -5109,6 +5243,10 @@ msgstr "咖啡机已处于蒸汽模式 5 分钟。"
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The machine rejected this file."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The other half of the same problem, measured instead of predicted. The machine counts the water the pump actually moves, works out the heat it carried out of the boiler, subtracts what the element has already put back, and holds the boiler above its setpoint until that balance is square. The element runs flat out while the gap is large and eases off as it closes, so control hands back to the PID without a step."
 msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
@@ -5144,6 +5282,10 @@ msgstr ""
 msgid "Thermal Feedforward Gain"
 msgstr "热前馈增益"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Thermal Recovery"
+msgstr ""
+
 #: src/app/machines.js
 msgid "this address is not a GaggiMate"
 msgstr "此地址不是 GaggiMate"
@@ -5163,6 +5305,10 @@ msgstr "此功能可连接到 Home Assistant 或 MQTT 服务并推送当前状�
 #: src/pages/Settings/PluginCard.jsx
 msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
 msgstr "此功能可控制 Tasmota 插座，在达到目标后关闭磨豆机。"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "This is what recovers the bloom and the pause after a shot, and it works on a flush too. Start at 2 °C. Unlike the bank it needs no profile, so it also covers shots that run longer or pull more water than planned."
+msgstr ""
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
@@ -5641,6 +5787,14 @@ msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "三"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Waiting above the brew setpoint, released when the shot starts."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "Waiting for the model to start. It needs the element wattage (Kff on the Machine tab) and a boiler heat capacity, then begins the moment the machine is heating."
+msgstr ""
+
 #: src/utils/warnings.js
 msgctxt "warning level"
 msgid "Warn"
@@ -5795,9 +5949,17 @@ msgstr "已达到重量"
 msgid "Weight Stop"
 msgstr "重量停止"
 
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "What is running right now. Nothing here changes the machine; the settings below do."
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "打蒸汽时泵的运行功率百分比"
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "What the pump draws at full drive, measured at the plug. Only feeds the power estimate; it changes nothing about how the machine runs. 59 W on a Rancilio Silvia."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"
