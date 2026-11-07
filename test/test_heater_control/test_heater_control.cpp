@@ -84,6 +84,48 @@ void test_duty_is_unknown_on_an_over_temperature_machine() {
     TEST_ASSERT_FALSE(heaterDutyCertainlyFull(silvia(), 104.7f, 93.0f, 8.0f, 1.5f));
 }
 
+// Shot 57 of the author's machine, and the reason shotsim has a --recovery flag.
+//
+// A shot log records the PROFILE target. With Thermal Recovery switched on, the setpoint the machine was actually
+// holding is that plus whatever the recovery balance was asking for, and the log does not contain it. Here the sensor
+// read 86.5 C against a logged target of 85: 1.5 C over, so the safety scaling says the element was off and the gate
+// says the duty is anything but certain. Against the 88 C recovery had pushed the setpoint to, the same sample is
+// 1.5 C UNDER and the element was pinned at 100 %.
+//
+// Same measurement, opposite answer, and the difference is the whole element. Reconstructing the duty against the
+// logged target made the tool report 0 usable samples out of 36 and blame the temperature offset; against the real
+// setpoint it is 18 of 36, and the mean duty goes from 9.5 % to 76 %.
+void test_a_recovery_boosted_setpoint_flips_the_gate() {
+    TEST_ASSERT_FALSE(heaterDutyCertainlyFull(silvia(), 86.5f, 85.0f, 9.7f, 1.5f));
+    TEST_ASSERT_TRUE(heaterDutyCertainlyFull(silvia(), 86.5f, 88.0f, 9.7f, 1.5f));
+}
+
+// And the same sample, stepped through the controller rather than the gate: the element shuts down against the
+// logged target and stays pinned against the real one. The gate and the control law have to agree about this or the
+// fit is scored against a duty trace the gate never endorsed.
+//
+// Not instantly, though, and the first version of this test asserted that it was. The safety factor is first-order
+// filtered with alpha 0.85, so an element that was running when the boiler went over temperature keeps 15 % of its
+// feedforward on the first tick -- 456 of 1000 units here -- and only reaches zero after three or four. The ramp is
+// the firmware's, not an approximation: an abrupt cut would be a step the PID has to recover from.
+void test_the_controller_agrees_about_a_boosted_setpoint() {
+    const HeaterControlParams c = silvia();
+    HeaterControlState logged;
+    HeaterControlState real;
+    heaterSeedIntegral(logged, c, 0.04f);
+    heaterSeedIntegral(real, c, 0.04f);
+
+    float onLogged = 0.0f;
+    float onReal = 0.0f;
+    for (int tick = 0; tick < 5; tick++) {
+        onLogged = heaterControlStep(logged, c, 1.0f, 86.5f, 85.0f, 9.7f, true);
+        onReal = heaterControlStep(real, c, 1.0f, 86.5f, 88.0f, 9.7f, true);
+    }
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, onLogged);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, onReal);
+}
+
 // A gentle shot never gets there, whatever the temperature is doing.
 void test_duty_is_unknown_at_a_slow_flow() {
     TEST_ASSERT_FALSE(heaterDutyCertainlyFull(silvia(), 90.0f, 93.0f, 1.3f, 1.5f));
@@ -176,6 +218,8 @@ int main(int, char **) {
     RUN_TEST(test_feedforward_is_zero_at_or_below_inlet);
     RUN_TEST(test_duty_is_full_at_setpoint_under_a_fast_fill);
     RUN_TEST(test_duty_is_unknown_on_an_over_temperature_machine);
+    RUN_TEST(test_a_recovery_boosted_setpoint_flips_the_gate);
+    RUN_TEST(test_the_controller_agrees_about_a_boosted_setpoint);
     RUN_TEST(test_duty_is_unknown_at_a_slow_flow);
     RUN_TEST(test_a_cold_boiler_needs_less_flow_than_a_hot_one);
     RUN_TEST(test_saturating_flow_matches_the_gate);
