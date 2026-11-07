@@ -56,6 +56,38 @@ nothing can be lost in between.
 deliberately leave that partition alone. Flash `bootloader.bin`, `partitions.bin`, `boot_app0.bin` and `firmware.bin`
 only, at `0x0`, `0x8000`, `0xe000` and `0x10000`.
 
+## Restart the display board before a large OTA
+
+A 3.8 MB display image sent to a board that has been up for hours stops partway. The device quietly stops consuming
+the body, and 15 s later the stall watchdog (`FIRMWARE_UPLOAD_STALL_MS`, `WebUIPlugin.cpp`) cancels the upload. Four
+attempts died at 128 KiB, 1.44 MB, 1.13 MB and 128 KiB — the progress is random, so a repeated byte count is not a
+clue about the cause.
+
+It looks like a crash or a damaged image and is neither. The board does not reboot (no new core dump, `/api/status`
+answers within a second of the failure) and the network is fine throughout (~125 KB/s on `GET /assets/*.js`). There is
+simply no longer enough contiguous heap for AsyncTCP to buffer an incoming 3.8 MB while `esp_ota_write` drains it at
+~40 KB/s.
+
+Restart first, then upload immediately:
+
+```bash
+curl -s -X POST -d "restart=1" http://<ip>/api/settings
+curl -X POST -H "X-GaggiMate-Firmware: 1" -H "Expect:" -H "Content-Type: application/octet-stream" \
+  --data-binary @out/display-firmware.bin "http://<ip>/api/firmware/upload?target=display"
+```
+
+The restart changes no settings: every setter in `handleSettings` is guarded by `hasArg`, so a body of `restart=1`
+alone writes nothing before `ESP.restart()`. A healthy upload takes ~90 s at ~42 KB/s and answers `{}` with 200; the
+board then reboots itself after `FIRMWARE_RESTART_DELAY_MS`.
+
+`-H "Expect:"` and the content type only match what the web UI's own XHR sends. Neither explains the stalls — the
+128 KiB failures happened both with and without the `Expect` handshake — but sending the same request the firmware is
+tested against removes two variables.
+
+To verify an install rather than trust the 200: the asset hashes in `/` are content-derived by Vite, so fetch the
+chunk holding your change and compare it to `web/dist/assets/<hash>.js.gz`. Byte-identical means the machine is
+serving the build you have.
+
 ## Native tests
 
 `pio test -e native` needs a host compiler (gcc/g++ on PATH), not the ESP32 toolchain. `test_ota_loadtest` only builds
@@ -89,3 +121,11 @@ applied and the remainder became replacement text.
 For a multi-line edit, write the replacement to a file and splice it by line number with `awk`, or use one
 substitution per `perl` invocation. Note also that most files here are **CRLF** (`core.autocrlf=true`), so a pattern
 ending in `\n` does not match — use `\r?\n`.
+
+Most, not all, and it depends on how the file was last written rather than on its type — a file this session wrote
+with LF stays LF until Git next normalises it. Splitting an LF file on `\r\n` yields a single line, so a splice finds
+no anchor and reports nothing to do. Check the specific file with `git ls-files --eol <path>` instead of assuming.
+
+If you splice with Python, remember `py` is the interpreter (see the PATH section above) and it is a Windows
+executable: it cannot open Git Bash paths like `/tmp`, and reports `FileNotFoundError` for a file that plainly
+exists. Put scratch files on a Windows path and pass it as a raw string.
