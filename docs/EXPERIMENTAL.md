@@ -14,6 +14,32 @@ the boiler's stored heat as a temperature drop, and nothing the PID does can cha
 
 That is the whole subject. Everything below either compensates for it, measures it, or shows it to you.
 
+### Where that account turned out to be wrong
+
+The arithmetic above is right about the energy. It is wrong about **when** the machine feels it, and that matters for
+what a compensation should do.
+
+Measured on the author's Silvia (shot 55, temperature offset 0), through a 37.8 ml fill at 8 ml/s:
+
+```
+removed, if water leaves at 93 °C:   11 376 J
+element at 100 % for 5.2 s:           4 725 J
+net:                                 -6 651 J   →  -1.9 °C expected
+measured at the sensor:                            +0.5 °C
+```
+
+The sensor *rose*. It only began falling three seconds after the fill ended, and then fell 7.6 °C over the next forty
+seconds at a flow of barely 1.3 ml/s. The element really was at 100 % throughout the fill — at 8 ml/s the feedforward
+asks for 2822 output units against a span of 1000.
+
+The reason is geometry. 37.8 ml out of a 300 ml boiler replaces 13 % of it. Cold water enters at the bottom, where the
+element is; water leaves from the top, which is also where the thermocouple is. For a draw that small the cold front
+never reaches the outlet, so neither the brew water nor the sensor sees it during the fill. The deficit arrives later,
+as the front works its way up.
+
+**So the sag is real but delayed.** A compensation timed to the opening phase is early. See `BoilerTwoMass.h`, and
+the measurement again in the `tools/shotsim` section below.
+
 ## The features, and how they differ
 
 | Feature | Question it answers | When it acts |
@@ -39,6 +65,12 @@ up during it, and surpluses only refill the bank up to the setpoint.
 - Needs the profile, so it covers planned shots only.
 - Capped by your setting, and absolutely by a 100 °C boiler ceiling — past atmospheric boiling the boiler makes steam
   rather than storing heat.
+
+**Mis-timed on a stratified boiler.** The bank is released at the start of the shot, to cover a sag in the opening
+phase. On the author's machine the opening phase does not sag — the sensor gains 0.5 °C through it — and the deficit
+turns up ten to forty seconds later, by which time the banked heat has been spent. That is a timing problem, not a
+tuning one, so lowering the cap does not fix it. Leave this at 0 on a machine that behaves this way and use Thermal
+Recovery, which is still holding a boost when the fall actually happens.
 
 ### Thermal Recovery
 
@@ -147,10 +179,31 @@ pio run -e shotsim
 Reads `.slog` files off the machine (shot history in the web UI, or `/h` on its filesystem), fits the boiler model with
 a joint extended Kalman filter, replays each shot open-loop to score the fit, and prints the settings the fit implies.
 
+**Two models, and it prints both.** The stratified fit (`BoilerTwoMass.h`) comes first because it uses every sample:
+it reconstructs the whole duty trace by running the controller's own law over the measured temperatures, which is
+legitimate because the reconstruction is driven by what the sensor reported rather than by the model being fitted. The
+one-node fit follows, for comparison, because the shipped compensations reason with that model and how badly it fits is
+worth knowing. On the author's two clean shots:
+
+```
+Stratified    open-loop RMS 0.260 °C   (0.909 °C for the starting guess)
+One node      heat capacity 20000 ± 8100 J/K, resting on a clamp — not a measurement
+```
+
+A 20 kJ/K boiler is six times anything a Silvia contains. That is the one-node model being asked to explain a sensor
+that barely moves, and having only one knob to do it with.
+
 **What it can and cannot identify.** The shot log records temperatures, pressures, flows and weights — but **not heater
-duty**, so the element's contribution has to be inferred. It is only known for certain while the flow exceeds what the
-element can hold, where the feedforward pins the output at 100 %. Everywhere else the filter learns nothing, and says
-so.
+duty**. For the one-node filter only samples whose duty is *certain* are used, and what makes it certain is the
+controller, not the physics: above about 3.2 ml/s the feedforward alone exceeds the output span, so the element is
+pinned even with the boiler sitting exactly on its setpoint. Requiring it to be *below* the setpoint — an earlier
+version of this test — threw away every usable fill phase and reported "nothing usable" on the only good logs.
+
+**Still not separable from a shot.** The fit above lands with its mixing pinned at 12 W/K, which is not a measurement
+either: the idle gradient is the standing loss divided by the mixing, so the two cannot be told apart from a shot, and
+the only thing stopping the fit from taking less of both is the 100 °C ceiling. The tool says so when that bound is
+what produced the number. Separating them needs a log where the loss is the only term left — an idle stretch or a
+cooldown — which is the next thing to record.
 
 Consequently:
 
@@ -182,8 +235,10 @@ Each piece is a header with no Arduino dependency, so all of it builds and is te
 | `src/display/util/ThermalBank.h` | Pre-shot banking arithmetic |
 | `src/display/util/ThermalRecovery.h` | Measured energy balance and the offset it asks for |
 | `src/display/util/BoilerModel.h` | The one-node thermal model all of the above assume |
-| `src/display/util/BoilerObserver.h` | Runs that model live beside the real boiler |
-| `src/display/util/BoilerIdentifier.h` | The joint EKF that fits the model to a machine |
+| `src/display/util/BoilerTwoMass.h` | Two cells in series, for the stratification one node cannot show |
+| `src/display/util/HeaterControlModel.h` | The controller's own law, so a tool can say what duty it commanded |
+| `src/display/util/BoilerObserver.h` | Runs the one-node model live beside the real boiler |
+| `src/display/util/BoilerIdentifier.h` | The joint EKF that fits the one-node model to a machine |
 | `src/display/util/PowerEstimate.h` | Power and energy from commanded duties |
 | `tools/shotsim/main.cpp` | Offline: read logs, fit, replay, recommend |
 | `web/src/pages/Settings/tabs/experimental/` | Status rows, graph, power panel |
@@ -191,7 +246,7 @@ Each piece is a header with no Arduino dependency, so all of it builds and is te
 Run the tests with:
 
 ```bash
-pio test -e native -f test_thermal_bank -f test_thermal_recovery -f test_boiler_model
+pio test -e native -f test_thermal_bank -f test_thermal_recovery -f test_boiler_model -f test_boiler_two_mass -f test_heater_control
 ```
 
 ## Change log
@@ -200,6 +255,7 @@ Newest first. Each entry is one commit.
 
 | Change | What it does |
 | --- | --- |
+| `feat(boiler): model the boiler as two cells in series, and fix the duty gate` | `BoilerTwoMass.h`, `HeaterControlModel.h`, the corrected `dutyIsCertainlyFull`, and the stratified fit in `shotsim` |
 | `feat(web): graph the live model and the estimated power` | The Experimental dashboard: status rows, model-vs-machine graph, power panel |
 | `feat(boiler): run the thermal model live and estimate power draw` | `BoilerObserver` and `PowerEstimate`, wired as observers that command nothing |
 | `feat(tools): fit the boiler model to a machine from its shot logs` | `tools/shotsim` and the `shotsim` build environment |

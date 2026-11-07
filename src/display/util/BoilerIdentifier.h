@@ -32,6 +32,7 @@
 #pragma once
 
 #include "BoilerModel.h"
+#include "HeaterControlModel.h"
 
 #include <cmath>
 #include <cstddef>
@@ -165,20 +166,26 @@ class BoilerIdentifier {
 
     // Whether the duty over this sample is certainly 100 %, which is the only case the filter can learn from.
     //
-    // Flow saturation alone is NOT enough, and assuming it was is what made the first run against real logs return a
-    // heat capacity half the true value. A boiler sitting above its setpoint has the element OFF whatever the flow is
-    // doing -- the PID is not asking for heat. Those logs turned out to be shots pulled from an over-temperature
-    // machine, starting at 104.7 °C against a 93 °C setpoint and cooling the whole way down; the filter was told the
-    // element was flat out for 43 samples where it was switched off, and the only way to explain a fall that fast with
-    // 900 W going in is a boiler with half the mass.
+    // This asks what the CONTROLLER must have commanded, not what the physics would require, and the difference
+    // matters in both directions. Two earlier versions of this test were wrong:
     //
-    // So the temperature has to be below the setpoint by a margin as well. Both conditions, and the margin on each.
-    static bool dutyIsCertainlyFull(const BoilerModelParams &params, float boilerC, float setpointC, float flowMlPerS,
-                                    float marginFactor, float setpointMarginK) {
-        if (setpointC <= 0.0f || boilerC > setpointC - setpointMarginK) {
-            return false;
-        }
-        return elementSaturated(params, boilerC, flowMlPerS, marginFactor);
+    //  - Flow saturation alone ("the flow needs more than 900 W, so the element is flat out") accepted shots pulled
+    //    from an over-temperature machine -- 104.7 °C against a 93 °C setpoint, cooling the whole way down -- where
+    //    the element was switched off throughout. 43 samples of fiction, and the only way to explain a fall that fast
+    //    with 900 W going in is a boiler with half the mass. That is where the first 1691 J/K came from.
+    //
+    //  - Adding "and the boiler is 2 °C below its setpoint" fixed that case and broke the good one. On this firmware
+    //    the disturbance feedforward asks for 2822 output units at 8 ml/s against a span of 1000, so the element is
+    //    pinned at 100 % while the boiler sits exactly ON its setpoint. Requiring it to be below threw away every fill
+    //    phase in the author's clean logs and reported "nothing usable" on the only shots worth fitting.
+    //
+    // The controller's own law settles it: see heaterDutyCertainlyFull. The sensor must be inside the window where the
+    // safety scaling has not cut the feedforward off, and the feedforward must exceed the span by a margin. That
+    // accepts a saturated fill at setpoint and still rejects the over-temperature machine, which fails the first
+    // condition by 11 °C.
+    static bool dutyIsCertainlyFull(const HeaterControlParams &control, float sensorC, float setpointC, float flowMlPerS,
+                                    float marginFactor) {
+        return heaterDutyCertainlyFull(control, sensorC, setpointC, flowMlPerS, marginFactor);
     }
 
   private:

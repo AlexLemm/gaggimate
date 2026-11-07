@@ -12,14 +12,25 @@
 //
 // Get the logs off the machine from the shot history in the web UI, or straight from its filesystem under /h.
 //
-// What it cannot do: the shot log does not record heater duty, so the element's contribution has to be inferred. It is
-// only known for certain while the flow exceeds what the element can hold, where the feedforward pins the output at
-// 100 %; everywhere else the fit learns nothing. See the note at the top of BoilerIdentifier.h. A log of a gentle shot
-// that never saturates the element will honestly report that it taught the filter nothing.
+// What it cannot do: the shot log does not record heater duty, so the element's contribution has to be inferred. That
+// is done two ways here, and the second is the better one.
+//
+//   - For the one-node filter, only samples whose duty is CERTAIN are used, which is where the controller's
+//     feedforward provably saturates the output. See BoilerIdentifier::dutyIsCertainlyFull.
+//   - For the two-mass fit, the whole duty trace is reconstructed by running the controller's own law over the
+//     measured temperatures (HeaterControlModel.h). That is legitimate because the reconstruction is driven by what
+//     the sensor reported, not by the model being fitted, so one trace scores every candidate -- and it uses every
+//     sample rather than a handful of saturated windows.
+//
+// Why there are two models at all: the one-node model cannot explain the author's own logs, where the sensor rises
+// through a 37 ml fill that removes 11 kJ. See the note at the top of BoilerTwoMass.h. The one-node fit is kept
+// because the shipped compensations reason with it, so knowing how badly it fits is worth printing.
 #include <display/core/constants.h>
 #include <display/models/shot_log_format.h>
 #include <display/util/BoilerIdentifier.h>
 #include <display/util/BoilerModel.h>
+#include <display/util/BoilerTwoMass.h>
+#include <display/util/HeaterControlModel.h>
 #include <display/util/ThermalBank.h>
 #include <display/util/ThermalRecovery.h>
 
@@ -39,22 +50,31 @@ struct Options {
     float capacityPrior = static_cast<float>(DEFAULT_BOILER_HEAT_CAPACITY);
     float lossPrior = 1.2f;
     float tauPrior = 4.0f;
-    // The margin on the saturation test. 1.2 leaves out samples near the boundary, where the duty is genuinely in
-    // doubt and a guess of 100 % would be the filter learning from fiction.
-    float saturationMargin = 1.2f;
+    // The margin on the saturation test. 1.5 means the feedforward must ask for half again more than the output span
+    // before the duty is called certain, which leaves 500 units of room for the proportional and derivative terms to
+    // subtract without unpinning the element.
+    float saturationMargin = 1.5f;
     int passes = 6;
+    // The controller's gains, needed to reconstruct the duty. Defaults are the author's machine; read them off the
+    // Machine tab. Kff is derived from --watts unless given, which keeps the one-number rule the UI enforces.
+    float kp = 29.0f;
+    float ki = 0.11f;
+    float kd = 379.5f;
+    float kff = 0.0f;
+    // Stratified starting points. Only the two cell capacities and the mixing are fitted; the loss and the lag stay
+    // where they start, for the same reason as in the one-node fit -- a shot cannot see them.
+    float inletCellPrior = 1000.0f;
+    float outletCellPrior = 1000.0f;
+    float mixingPrior = 60.0f;
     std::string csvPath;
     std::vector<std::string> logs;
 };
-
-// How far below its setpoint the boiler must sit before the element is taken to be certainly on. Covers the PID
-// easing off as it closes on the setpoint, and the temperature offset being slightly out.
-constexpr float SETPOINT_MARGIN_K = 2.0f;
 
 struct Shot {
     std::string name;
     std::string profile;
     std::vector<BoilerLogSample> samples;
+    std::vector<BoilerTwoMassSample> twoMass; // same samples, with the reconstructed duty on every one
     float peakFlow = 0.0f;
     float startC = 0.0f;
     float minC = 0.0f;
@@ -63,6 +83,16 @@ struct Shot {
     float durationS = 0.0f;
     size_t saturated = 0;
 };
+
+HeaterControlParams controlFrom(const Options &opt) {
+    HeaterControlParams c;
+    c.kp = opt.kp;
+    c.ki = opt.ki;
+    c.kd = opt.kd;
+    c.kff = opt.kff > 0.0f ? opt.kff : (opt.heaterWatts > 0.0f ? HEATER_OUTPUT_SPAN / opt.heaterWatts : 0.0f);
+    c.inletC = opt.inletC;
+    return c;
+}
 
 void usage() {
     std::printf("usage: shotsim [options] <shot.slog> [more.slog ...]\n"
@@ -74,8 +104,14 @@ void usage() {
                 "  --capacity <J/K> starting guess for the boiler heat capacity (default %d)\n"
                 "  --loss <W/K>     starting guess for standing loss; a shot cannot identify this (default 1.2)\n"
                 "  --tau <s>        starting guess for the sensor lag (default 4)\n"
-                "  --margin <x>     how far past the element's limit a sample must be to count (default 1.2)\n"
+                "  --margin <x>     how far past the output span the feedforward must ask before the duty is taken as\n"
+                "                   certain (default 1.5)\n"
                 "  --passes <n>     sweeps over the data; more makes the answer independent of the guess (default 6)\n"
+                "  --pid <p,i,d>    the machine's PID gains, to reconstruct the duty (default 29,0.11,379.5)\n"
+                "  --kff <u/W>      feedforward gain; defaults to 1000 / --watts, as the UI derives it\n"
+                "  --cbottom <J/K>  starting guess for the lower boiler half's heat capacity (default 1000)\n"
+                "  --ctop <J/K>     starting guess for the upper half's, which carries the sensor (default 1000)\n"
+                "  --mixing <W/K>   starting guess for convective mixing between the halves (default 60)\n"
                 "  --csv <path>     write measured and predicted temperatures for plotting\n",
                 DEFAULT_INLET_WATER_TEMP, DEFAULT_INLET_WATER_TEMP, DEFAULT_BOILER_HEAT_CAPACITY);
 }
@@ -104,6 +140,20 @@ bool parseArgs(int argc, char **argv, Options &out) {
             out.saturationMargin = std::stof(argv[++i]);
         } else if (arg == "--passes" && hasValue) {
             out.passes = std::atoi(argv[++i]);
+        } else if (arg == "--pid" && hasValue) {
+            // Same "Kp,Ki,Kd" the Machine tab shows, so it can be pasted straight across.
+            if (std::sscanf(argv[++i], "%f,%f,%f", &out.kp, &out.ki, &out.kd) != 3) {
+                std::fprintf(stderr, "--pid wants three comma-separated numbers, as on the Machine tab\n");
+                return false;
+            }
+        } else if (arg == "--kff" && hasValue) {
+            out.kff = std::stof(argv[++i]);
+        } else if (arg == "--cbottom" && hasValue) {
+            out.inletCellPrior = std::stof(argv[++i]);
+        } else if (arg == "--ctop" && hasValue) {
+            out.outletCellPrior = std::stof(argv[++i]);
+        } else if (arg == "--mixing" && hasValue) {
+            out.mixingPrior = std::stof(argv[++i]);
         } else if (arg == "--csv" && hasValue) {
             out.csvPath = argv[++i];
         } else if (!arg.empty() && arg[0] == '-') {
@@ -129,7 +179,7 @@ BoilerModelParams priorFrom(const Options &opt) {
 
 // Reads one .slog. The sample layout is fixed and the header states its own size, so a log written by an older
 // firmware still reads -- shotLogSampleSize returns 0 for one this build cannot interpret.
-bool readShot(const std::string &path, const Options &opt, const BoilerModelParams &prior, Shot &out) {
+bool readShot(const std::string &path, const Options &opt, const HeaterControlParams &control, Shot &out) {
     std::FILE *file = std::fopen(path.c_str(), "rb");
     if (file == nullptr) {
         std::fprintf(stderr, "%s: cannot open\n", path.c_str());
@@ -159,6 +209,9 @@ bool readShot(const std::string &path, const Options &opt, const BoilerModelPara
 
     uint32_t previousMs = 0;
     bool first = true;
+    // One controller, stepped alongside the log, so the duty it reports carries the integral and derivative history a
+    // per-sample calculation would throw away.
+    HeaterControlState heater;
     for (uint32_t i = 0; i < header.sampleCount; i++) {
         uint8_t raw[SHOT_LOG_SAMPLE_SIZE] = {0};
         if (std::fread(raw, sampleSize, 1, file) != 1) {
@@ -178,14 +231,33 @@ bool readShot(const std::string &path, const Options &opt, const BoilerModelPara
         sample.dtS = first ? header.sampleInterval / 1000.0f : (elapsed - previousMs) / 1000.0f;
         sample.measuredC = measuredC;
         sample.flowMlPerS = flow > 0.0f ? flow : 0.0f;
-        // Both conditions: the flow must outrun the element AND the boiler must be below its setpoint, or the duty is
-        // not known to be 100 %. See BoilerIdentifier::dutyIsCertainlyFull -- leaving the second one out is what made
-        // the first run against real logs return half the true heat capacity.
-        sample.dutyKnown = BoilerIdentifier::dutyIsCertainlyFull(prior, measuredC, targetC, sample.flowMlPerS,
-                                                                 opt.saturationMargin, SETPOINT_MARGIN_K);
+        // Whether the controller's feedforward provably had the element pinned. See
+        // BoilerIdentifier::dutyIsCertainlyFull for why this asks about the controller and not about the physics.
+        sample.dutyKnown =
+            BoilerIdentifier::dutyIsCertainlyFull(control, measuredC, targetC, sample.flowMlPerS, opt.saturationMargin);
         sample.dutyFraction = sample.dutyKnown ? 1.0f : 0.0f;
 
+        if (first) {
+            // The machine has been idling at its setpoint, so the integral is already holding whatever the standing
+            // loss costs. Starting it at zero would open every shot with the element off.
+            BoilerModelParams idle;
+            idle.heaterWatts = opt.heaterWatts;
+            idle.lossWPerK = opt.lossPrior;
+            idle.ambientC = opt.ambientC;
+            idle.inletC = opt.inletC;
+            heaterSeedIntegral(heater, control, boilerModelRequiredDuty(idle, measuredC, 0.0f));
+        }
+        // The duty the controller would have commanded, from the temperature it actually saw. The valve is open for
+        // the whole of a shot, so flow alone decides whether the feedforward is in play.
+        BoilerTwoMassSample wide;
+        wide.dtS = sample.dtS;
+        wide.measuredC = measuredC;
+        wide.flowMlPerS = sample.flowMlPerS;
+        wide.dutyFraction =
+            heaterControlStep(heater, control, sample.dtS, measuredC, targetC, sample.flowMlPerS, true);
+
         if (sample.dtS > 0.0f && sample.dtS < 5.0f) {
+            out.twoMass.push_back(wide);
             out.samples.push_back(sample);
             out.waterMl += sample.flowMlPerS * sample.dtS;
             out.durationS += sample.dtS;
@@ -215,30 +287,218 @@ bool readShot(const std::string &path, const Options &opt, const BoilerModelPara
 // one matters: a log whose flow never outran the element needs a different profile, while one that never got below its
 // setpoint needs a machine that was not already too hot. Blaming the flow for a setpoint problem sent the first real
 // run looking in entirely the wrong place, since the flow had peaked at 8 ml/s.
-void describe(const Shot &shot, const BoilerModelParams &params) {
-    const float limit = boilerModelMaxSustainableFlow(params, shot.targetC > 0.0f ? shot.targetC : shot.startC);
-    std::printf("  %-20s %5.1f s %6.1f ml  peak %4.2f ml/s  %5.1f -> %5.1f C (target %5.1f)  %zu/%zu usable\n",
+void describe(const Shot &shot, const HeaterControlParams &control, const Options &opt) {
+    const float setpoint = shot.targetC > 0.0f ? shot.targetC : shot.startC;
+    const float needed = heaterSaturatingFlow(control, setpoint, opt.saturationMargin);
+    std::printf("  %-20s %5.1f s %6.1f ml  peak %4.2f ml/s  %5.1f -> %5.1f C (target %5.1f)  %zu/%zu at full duty\n",
                 shot.profile.empty() ? "(unnamed)" : shot.profile.c_str(), shot.durationS, shot.waterMl, shot.peakFlow,
                 shot.startC, shot.minC, shot.targetC, shot.saturated, shot.samples.size());
 
-    if (shot.startC > shot.targetC + SETPOINT_MARGIN_K) {
-        std::printf("    started %.1f C above the setpoint, so most of that fall is the machine cooling back to it\n"
-                    "    rather than the water taking heat out.\n",
-                    shot.startC - shot.targetC);
-    }
     if (shot.saturated > 0) {
         return;
     }
-    if (shot.peakFlow <= limit * 1.2f) {
-        std::printf("    nothing usable: the flow never passed %.2f ml/s, so the element was never certainly flat\n"
-                    "    out. Pull a shot with a faster fill phase.\n",
-                    limit * 1.2f);
+    // Which of the two conditions ruled it out, named rather than guessed at: a log whose flow never got there needs a
+    // different profile, while one that was simply too hot needs the offset checked.
+    if (shot.peakFlow < needed) {
+        std::printf("    no certain duty: the flow never passed %.2f ml/s, which is where the feedforward alone\n"
+                    "    saturates the output. Pull a shot with a faster fill phase.\n",
+                    needed);
     } else {
-        std::printf("    nothing usable: the flow was fast enough, but the boiler never got %.0f C below its\n"
-                    "    setpoint while it was, so the element may have been switched off throughout. Pull a shot\n"
-                    "    from a machine sitting at its setpoint rather than above it.\n",
-                    SETPOINT_MARGIN_K);
+        std::printf("    no certain duty: the flow was fast enough, but the sensor stayed more than 0.8 C above the\n"
+                    "    setpoint throughout, where the safety scaling switches the feedforward off. A machine\n"
+                    "    sitting that far over its setpoint is usually a temperature offset -- check --offset.\n");
     }
+}
+
+// ---------------------------------------------------------------------------
+// Two-mass fit
+// ---------------------------------------------------------------------------
+
+struct TwoMassFit {
+    BoilerTwoMassParams params;
+    float rmsErrorC = 0.0f;
+    float priorRmsErrorC = 0.0f;
+    float minOutletC = 0.0f;     // coldest water the puck saw, which no machine can measure
+    float sensorThenC = 0.0f;    // what the sensor was reading at that moment
+    float minInletCellC = 0.0f;  // how cold the bottom of the boiler got
+    int evaluations = 0;
+};
+
+BoilerTwoMassParams twoMassFrom(const Options &opt, double lnBottom, double lnTop, double lnMixing) {
+    BoilerTwoMassParams p;
+    p.inletCapacityJPerK = static_cast<float>(std::exp(lnBottom));
+    p.outletCapacityJPerK = static_cast<float>(std::exp(lnTop));
+    p.mixingWPerK = static_cast<float>(std::exp(lnMixing));
+    p.lossWPerK = opt.lossPrior;
+    p.sensorTauS = opt.tauPrior;
+    p.heaterWatts = opt.heaterWatts;
+    p.ambientC = opt.ambientC;
+    p.inletC = opt.inletC;
+    return p;
+}
+
+// RMS over every sample of every shot, pooled rather than averaged per shot, so a long shot counts for more than a
+// short one.
+float twoMassScore(const std::vector<Shot> &shots, const BoilerTwoMassParams &p, float workingC) {
+    // Outside these a fit has stopped describing an espresso machine, and letting the search wander there buys a good
+    // score with a number that means nothing.
+    if (p.inletCapacityJPerK < 200.0f || p.inletCapacityJPerK > 12000.0f || p.outletCapacityJPerK < 200.0f ||
+        p.outletCapacityJPerK > 12000.0f || p.mixingWPerK < 2.0f || p.mixingWPerK > 3000.0f) {
+        return 1.0e6f;
+    }
+    // And the stored gradient the seeding implies has to be one a boiler could actually hold. Without this the search
+    // flattens the sensor trace by putting the bottom of the boiler above boiling, which is how the first version of
+    // this fit arrived at a 5 W/K coupling and water idling at 110 C.
+    if (!boilerTwoMassPlausible(p, workingC)) {
+        return 1.0e6f;
+    }
+    double sumSquared = 0.0;
+    size_t count = 0;
+    for (const auto &shot : shots) {
+        const auto replay = boilerTwoMassReplay(shot.twoMass.data(), shot.twoMass.size(), p);
+        sumSquared += static_cast<double>(replay.rmsErrorC) * replay.rmsErrorC * static_cast<double>(replay.samples);
+        count += replay.samples;
+    }
+    if (count == 0) {
+        return 1.0e6f;
+    }
+    const double rms = std::sqrt(sumSquared / static_cast<double>(count));
+    return std::isfinite(rms) ? static_cast<float>(rms) : 1.0e6f;
+}
+
+// Nelder-Mead over the logs of the three fitted parameters.
+//
+// A simplex search rather than another Kalman filter, and deliberately so. The filter in BoilerIdentifier.h earns its
+// place by reporting a covariance, but it needs the duty to be certain, which confines it to the saturated windows. A
+// direct search on the open-loop replay error uses the whole shot and optimises exactly the number worth judging the
+// model by. What it gives up is the error bars, so what it prints below is a score, not a measurement with a sigma.
+TwoMassFit fitTwoMass(const std::vector<Shot> &shots, const Options &opt) {
+    TwoMassFit out;
+    // The temperature the plausibility check is applied at: where this machine actually sits while it works, since
+    // that is where the stored gradient has to be one a boiler could hold.
+    const float workingC = shots.front().targetC > 0.0f ? shots.front().targetC : shots.front().startC;
+    const double start[3] = {std::log(opt.inletCellPrior), std::log(opt.outletCellPrior), std::log(opt.mixingPrior)};
+    out.priorRmsErrorC = twoMassScore(shots, twoMassFrom(opt, start[0], start[1], start[2]), workingC);
+
+    // Four vertices for three dimensions, the extras offset by a factor of e^0.4 (about 1.5x) on one axis each.
+    double simplex[4][3];
+    double score[4];
+    for (int v = 0; v < 4; v++) {
+        for (int d = 0; d < 3; d++) {
+            simplex[v][d] = start[d] + (v - 1 == d ? 0.4 : 0.0);
+        }
+        score[v] = twoMassScore(shots, twoMassFrom(opt, simplex[v][0], simplex[v][1], simplex[v][2]), workingC);
+        out.evaluations++;
+    }
+
+    for (int iteration = 0; iteration < 400; iteration++) {
+        int best = 0, worst = 0, second = 0;
+        for (int v = 1; v < 4; v++) {
+            if (score[v] < score[best]) {
+                best = v;
+            }
+            if (score[v] > score[worst]) {
+                worst = v;
+            }
+        }
+        for (int v = 0; v < 4; v++) {
+            if (v != worst && score[v] > score[second == worst ? best : second]) {
+                second = v;
+            }
+        }
+        // Converged once the simplex has collapsed: 0.002 in log space is 0.2 % on a parameter, far finer than the
+        // data can justify.
+        double spread = 0.0;
+        for (int d = 0; d < 3; d++) {
+            spread += std::fabs(simplex[worst][d] - simplex[best][d]);
+        }
+        if (spread < 0.002) {
+            break;
+        }
+
+        double centroid[3] = {0.0, 0.0, 0.0};
+        for (int v = 0; v < 4; v++) {
+            if (v == worst) {
+                continue;
+            }
+            for (int d = 0; d < 3; d++) {
+                centroid[d] += simplex[v][d] / 3.0;
+            }
+        }
+
+        double trial[3];
+        for (int d = 0; d < 3; d++) {
+            trial[d] = centroid[d] + (centroid[d] - simplex[worst][d]); // reflect
+        }
+        float trialScore = twoMassScore(shots, twoMassFrom(opt, trial[0], trial[1], trial[2]), workingC);
+        out.evaluations++;
+
+        if (trialScore < score[best]) {
+            double expanded[3];
+            for (int d = 0; d < 3; d++) {
+                expanded[d] = centroid[d] + 2.0 * (centroid[d] - simplex[worst][d]);
+            }
+            const float expandedScore = twoMassScore(shots, twoMassFrom(opt, expanded[0], expanded[1], expanded[2]), workingC);
+            out.evaluations++;
+            if (expandedScore < trialScore) {
+                for (int d = 0; d < 3; d++) {
+                    trial[d] = expanded[d];
+                }
+                trialScore = expandedScore;
+            }
+        } else if (trialScore >= score[second]) {
+            for (int d = 0; d < 3; d++) {
+                trial[d] = centroid[d] + 0.5 * (simplex[worst][d] - centroid[d]); // contract
+            }
+            trialScore = twoMassScore(shots, twoMassFrom(opt, trial[0], trial[1], trial[2]), workingC);
+            out.evaluations++;
+            if (trialScore >= score[worst]) {
+                // Shrink everything toward the best vertex.
+                for (int v = 0; v < 4; v++) {
+                    if (v == best) {
+                        continue;
+                    }
+                    for (int d = 0; d < 3; d++) {
+                        simplex[v][d] = simplex[best][d] + 0.5 * (simplex[v][d] - simplex[best][d]);
+                    }
+                    score[v] = twoMassScore(shots, twoMassFrom(opt, simplex[v][0], simplex[v][1], simplex[v][2]), workingC);
+                    out.evaluations++;
+                }
+                continue;
+            }
+        }
+        for (int d = 0; d < 3; d++) {
+            simplex[worst][d] = trial[d];
+        }
+        score[worst] = trialScore;
+    }
+
+    int best = 0;
+    for (int v = 1; v < 4; v++) {
+        if (score[v] < score[best]) {
+            best = v;
+        }
+    }
+    out.params = twoMassFrom(opt, simplex[best][0], simplex[best][1], simplex[best][2]);
+    out.rmsErrorC = score[best];
+
+    // Where the brew water actually got, which is the number this model exists to produce.
+    out.minOutletC = 1.0e6f;
+    out.minInletCellC = 1.0e6f;
+    for (const auto &shot : shots) {
+        BoilerTwoMassState state = boilerTwoMassSeedIdle(out.params, shot.twoMass.front().measuredC);
+        for (const auto &s : shot.twoMass) {
+            boilerTwoMassStep(state, out.params, s.dtS, s.dutyFraction, s.flowMlPerS);
+            if (state.outletCellC < out.minOutletC) {
+                out.minOutletC = state.outletCellC;
+                out.sensorThenC = s.measuredC;
+            }
+            if (state.inletCellC < out.minInletCellC) {
+                out.minInletCellC = state.inletCellC;
+            }
+        }
+    }
+    return out;
 }
 
 // What the fitted model says the two compensations should be set to, from this shot's own flow trace.
@@ -353,10 +613,11 @@ int main(int argc, char **argv) {
     }
 
     const BoilerModelParams prior = priorFrom(opt);
+    const HeaterControlParams control = controlFrom(opt);
     std::vector<Shot> shots;
     for (const auto &path : opt.logs) {
         Shot shot;
-        if (readShot(path, opt, prior, shot)) {
+        if (readShot(path, opt, control, shot)) {
             shots.push_back(std::move(shot));
         }
     }
@@ -368,8 +629,43 @@ int main(int argc, char **argv) {
     std::printf("Shots read\n");
     size_t saturatedTotal = 0;
     for (const auto &shot : shots) {
-        describe(shot, prior);
+        describe(shot, control, opt);
         saturatedTotal += shot.saturated;
+    }
+
+    // The two-mass fit first, because it is the one that uses the whole shot. The one-node figures below are kept for
+    // comparison: the compensations that ship reason with that model, so how badly it fits is worth knowing.
+    const TwoMassFit wide = fitTwoMass(shots, opt);
+    std::printf("\nStratified fit (every sample, duty reconstructed from the controller's own law)\n");
+    std::printf("  Lower half capacity    %6.0f J/K   (started from %.0f)\n", wide.params.inletCapacityJPerK,
+                opt.inletCellPrior);
+    std::printf("  Upper half capacity    %6.0f J/K   (started from %.0f)\n", wide.params.outletCapacityJPerK,
+                opt.outletCellPrior);
+    std::printf("  Mixing between them    %6.0f W/K   (started from %.0f)\n", wide.params.mixingWPerK,
+                opt.mixingPrior);
+    std::printf("  Standing loss and lag  held at %.2f W/K and %.1f s -- a shot cannot see either\n",
+                wide.params.lossWPerK, wide.params.sensorTauS);
+    std::printf("  Open-loop RMS          %6.3f C    (%.3f C for the starting guess, %d evaluations)\n",
+                wide.rmsErrorC, wide.priorRmsErrorC, wide.evaluations);
+    std::printf("  Brew water bottomed at %6.1f C   while the sensor read %.1f C; the bottom of the boiler got to\n"
+                "                         %6.1f C\n",
+                wide.minOutletC, wide.sensorThenC, wide.minInletCellC);
+    std::printf("  That first gap is the point of this model: the water reaching the puck is what the shot tastes\n"
+                "  of, and no machine measures it.\n");
+    if (wide.rmsErrorC > 0.5f) {
+        std::printf("  Over 0.5 C out, so this structure does not describe the machine either. Check --watts and\n"
+                    "  --pid against the Machine tab before reading anything into the capacities.\n");
+    }
+    // The idle gradient is loss / mixing, so the two are not separable from a shot: a fit wanting less mixing can
+    // only have it if the loss is smaller, and the ceiling is what stops it taking both. Saying when that bound is
+    // what produced the number matters more than the number.
+    const float seededBottomC = boilerTwoMassSeedIdle(wide.params, shots.front().targetC).inletCellC;
+    if (seededBottomC > BOILER_TWO_MASS_CEILING_C - 0.3f) {
+        std::printf("  The mixing is pinned by the %.0f C ceiling, not by the data: at a standing loss of %.2f W/K\n"
+                    "  anything lower would need the bottom of the boiler above boiling while it idles. The two are\n"
+                    "  not separable from a shot -- their ratio IS the idle gradient. Log an idle stretch or a\n"
+                    "  cooldown, where the loss is the only term left, and run that first.\n",
+                    BOILER_TWO_MASS_CEILING_C, wide.params.lossWPerK);
     }
 
     BoilerIdentifierConfig cfg;
@@ -385,7 +681,7 @@ int main(int argc, char **argv) {
     }
     const BoilerIdentifierResult fit = filter.result();
 
-    std::printf("\nFitted model (%zu of %zu samples taught the filter anything)\n", fit.samplesLearned,
+    std::printf("\nOne-node fit, for comparison (%zu of %zu samples taught the filter anything)\n", fit.samplesLearned,
                 fit.samplesSeen);
     std::printf("  Heat capacity   %6.0f +- %4.0f J/K   (started from %.0f)\n", fit.params.capacityJPerK,
                 fit.capacitySigma, opt.capacityPrior);
@@ -396,8 +692,9 @@ int main(int argc, char **argv) {
     std::printf("  Element         %6.0f W, taken as given\n", fit.params.heaterWatts);
 
     if (saturatedTotal == 0) {
-        std::printf("\nNothing was identified: no shot here ran the element flat out for certain, so the duty was\n"
-                    "unknown throughout and the figures above are still the starting guesses.\n");
+        std::printf("\nThe one-node figures above are still its starting guesses: no shot here held the element at a\n"
+                    "certain 100 %%, so the filter had nothing to learn from. The two-mass fit does not need that --\n"
+                    "it reconstructs the duty throughout -- so read it instead.\n");
         return 2;
     }
 
