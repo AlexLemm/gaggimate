@@ -135,6 +135,18 @@ Three temperature series, and the third is the interesting one:
 Open loop drifts, so the model re-seeds itself from the measurement when the error passes 5 °C. Frequent re-seeding is
 itself the signal: it means the parameters do not fit.
 
+#### A blank graph now says which blank it is
+
+The firmware reports 0 for the model temperatures when the observer has no state — and 0 is also a temperature, so the
+chart could not tell "not running" from "reading zero". It dropped every zero, which is right, and then explained the
+result with the only message it had: *needs Kff and a heat capacity*. A machine that was merely not connected yet read
+as a misconfigured one.
+
+Telemetry now carries the observer's own `mr` (model running) flag, the chart gates the model series on that rather
+than on the value, and the empty state names the actual case: no telemetry at all, or telemetry with a model that
+cannot run. The model runs continuously once Kff and a capacity are set — idle included, which is where the standing
+loss is measurable.
+
 ### Power Estimate
 
 No current sensor. Every load is either on or driven at a duty the firmware itself commands, so the draw is
@@ -142,8 +154,8 @@ No current sensor. Every load is either on or driven at a duty the firmware itse
 
 Measured on the user's Silvia: **900 W element, 59 W pump at full.**
 
-- The element is 94 % of a full-load draw, purely resistive, and its duty is exactly known — so the total is good to a
-  few per cent.
+- The element is 94 % of a full-load draw and purely resistive. Its duty is *known* rather than modelled — but known
+  by the controller board, which is where the trap is; see below. The total is good to a few per cent.
 - The pump term is a **linear approximation**. A vibratory pump under phase-angle control is closer to the square of
   the conduction fraction. It is worth 59 W at most, and the error inside that is less. Accurate enough for "what does
   a shot cost", not accurate enough to bill anyone. `PowerEstimateParams::pumpCurve` exists to improve on it without
@@ -151,6 +163,48 @@ Measured on the user's Silvia: **900 W element, 59 W pump at full.**
 - **Net into boiler** is the number to watch during a shot: element minus what the water carried away minus standing
   loss. It goes sharply negative the moment a high-flow phase starts — that is the sag in watts, before the sensor has
   caught up enough to show it.
+
+#### A reported duty is not evidence that the element is on
+
+The display never sees the element. It commands a boiler setpoint; the controller board runs the PID and reports back
+the duty it computed. That duty is exact for the window it describes — and the window has already closed.
+
+When the display stops commanding a setpoint, `Heater::loop` on the controller cuts the relay and puts the PID in
+manual mode. `SimplePID::update()` then returns early **without writing a new output**, so `getDutyCycle()` keeps
+reporting whatever the PID last asked for, indefinitely. A machine that went to standby part-way up its heat-up curve
+reported a duty of 100 % for as long as it stayed off. The estimate believed it, showed a 900 W element, and the
+energy-since-boot total climbed at 900 W while the boiler cooled.
+
+Two changes, because the number was wrong in two places:
+
+- The controller now zeroes `output` on the way into the off branch and in `Heater::stop()`, so what it reports is
+  what it is doing. This is the root cause.
+- The display no longer takes a reported duty as proof on its own. `PowerEstimateInputs::heaterEnabled` carries
+  whether a setpoint above zero is being commanded; with no setpoint the duty is charged as 0 W and
+  `heaterReportIgnored` is set, so the dashboard shows the disagreement instead of a corrected number with no
+  explanation. The same gate feeds the live model, which was being told to add a full element's worth of heat to a
+  boiler that was cooling.
+
+Thermal Recovery was never affected: it already resets its balance when the real setpoint is zero, so the stale duty
+could not reach it.
+
+#### Commands and estimates
+
+A table on the Experimental tab, in three columns — **commanded**, **reported**, **estimated** — because the failures
+worth catching are the ones where they disagree:
+
+| Row | Commanded | Reported | Estimated |
+| --- | --- | --- | --- |
+| Element | setpoint °C, or *off* | duty % from the controller | W |
+| Pump | drive % | drive % from the controller | W |
+| Brew valve | open / closed | — | counted in Other |
+| Other | — | — | board, display, solenoid |
+| Total now | — | — | W, plus Wh since boot |
+
+Below it, the figures that integrate over time: the **last shot in ml** (the pump model's own volume, reset when a
+shot starts, so between shots it is the shot that just finished), the **energy debt** in kJ that Thermal Recovery has
+measured and not yet been paid back, the **offset recovery is asking for**, and the **offset actually applied** —
+which is the larger of recovery and the pre-shot bank, never the sum.
 
 ## Setting it up
 
@@ -344,12 +398,12 @@ Each piece is a header with no Arduino dependency, so all of it builds and is te
 | `src/display/util/PowerEstimate.h` | Power and energy from commanded duties |
 | `tools/shotsim/main.cpp` | Offline: read logs and captures, fit, replay, recommend |
 | `tools/thermalcap/thermalcap.mjs` | Records live telemetry, measured duty included, to a CSV `shotsim` reads |
-| `web/src/pages/Settings/tabs/experimental/` | Status rows, graph, power panel |
+| `web/src/pages/Settings/tabs/experimental/` | Status rows, graph, power panel, commands table |
 
 Run the tests with:
 
 ```bash
-pio test -e native -f test_thermal_bank -f test_thermal_recovery -f test_boiler_model -f test_boiler_two_mass -f test_heater_control -f test_standing_loss
+pio test -e native -f test_thermal_bank -f test_thermal_recovery -f test_boiler_model -f test_boiler_two_mass -f test_heater_control -f test_standing_loss -f test_power_estimate
 ```
 
 ## Change log
@@ -358,6 +412,7 @@ Newest first. Each entry is one commit.
 
 | Change | What it does |
 | --- | --- |
+| `fix(power): stop charging for an element that is switched off` | The stale reported duty, the `heaterEnabled` gate, the commands table, and the model chart saying why it is blank |
 | `feat(tools): measure the standing loss instead of guessing at it` | `tools/thermalcap`, `StandingLoss.h`, `shotsim --capture`, and the recovery-aware duty reconstruction |
 | `feat(boiler): model the boiler as two cells in series, and fix the duty gate` | `BoilerTwoMass.h`, `HeaterControlModel.h`, the corrected `dutyIsCertainlyFull`, and the stratified fit in `shotsim` |
 | `feat(web): graph the live model and the estimated power` | The Experimental dashboard: status rows, model-vs-machine graph, power panel |

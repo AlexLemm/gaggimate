@@ -46,6 +46,11 @@ void Heater::loop() {
 
     if (sensor->isErrorState() || setpoint <= 0.0f) {
         simplePid->setMode(SimplePID::Control::manual);
+        // Zero the output, not just the relay. SimplePID::update() returns early in manual mode without touching
+        // *controlerOutput, so output keeps whatever the PID last asked for -- and getDutyCycle() reports that number
+        // to the display, which bills it as element watts and integrates it into the energy total. A machine that goes
+        // to standby mid-heat-up then reads a full 900 W element for as long as it stays off.
+        output = 0.0f;
         requestOutput(false);
         temperature = sensor->read();
         return;
@@ -73,6 +78,7 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
 void Heater::stop() {
     autotuning = false;
     setSetpoint(0.0f);
+    output = 0.0f;        // and report it: getDutyCycle() is read as element power (see loop())
     requestOutput(false); // cut the relay now instead of on the heater task's next tick
 }
 

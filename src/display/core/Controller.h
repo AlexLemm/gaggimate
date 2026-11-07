@@ -81,7 +81,20 @@ class Controller {
     float getEstimatedPower() const { return powerEstimate.totalW; }
     float getEstimatedHeaterPower() const { return powerEstimate.heaterW; }
     float getEstimatedPumpPower() const { return powerEstimate.pumpW; }
+    float getEstimatedOtherPower() const { return powerEstimate.otherW; }
     float getEstimatedEnergyWh() const { return powerAccumulator.energyWh(); }
+    // The duty the estimate charged for, and whether it had to throw away a duty the controller reported for an
+    // element that is commanded off. The second is a fault report, not a reading: see PowerEstimate.h.
+    float getEstimatedHeaterDuty() const { return powerEstimate.heaterDutyPercent; }
+    bool isHeaterReportIgnored() const { return powerEstimate.heaterReportIgnored; }
+    // Whether the live model has state to report. getModelTemp() returns 0 when it does not, and 0 is also a
+    // temperature, so anything drawing those traces needs this to tell "not running" from "reading zero".
+    bool isModelRunning() const { return boilerObserver.isRunning(); }
+    // The last boiler setpoint handed to the controller, temperature offset and compensations included. This is the
+    // command; currentHeaterPower is what came back.
+    float getCommandedBoilerSetpoint() const { return lastBoiler.setpoint; }
+    float getCommandedPumpPower() const { return lastPump.power; }
+    bool isBrewValveOpen() const { return lastRelay.open; }
     int getTargetGrindDuration() const;
     virtual float getCurrentTemp() const { return currentTemp; }
     virtual float getCurrentSteamTemp() const { return currentSteamTemp; }
@@ -274,7 +287,7 @@ class Controller {
 
     // Steps the live boiler model and the power estimate. Both are observers: they read telemetry and settings and
     // write nothing the machine acts on, so they are kept apart from the compensation path above.
-    void updateObservers(float dtS);
+    void updateObservers(float dtS, float commandedSetpointC);
     BoilerModelParams modelParams() const;
 
     BoilerObserver boilerObserver;

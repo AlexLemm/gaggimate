@@ -246,6 +246,81 @@ void test_observer_water_leads_the_sensor() {
     TEST_ASSERT_TRUE(obs.netPowerW() < 0.0f); // being drained faster than the element can refill
 }
 
+// ---------------------------------------------------------------------------
+// A duty is not evidence that the element is on
+// ---------------------------------------------------------------------------
+
+// The bug this rule exists for. The controller board runs the PID and reports its duty over BLE; when the display
+// stops commanding a setpoint the controller cuts the relay, but the duty it last computed stays in the field it
+// reports from, because the PID returns early in manual mode without writing a new one. A dashboard that believed it
+// showed a 900 W element on a machine standing in standby, and the energy total climbed the whole time.
+void test_a_duty_reported_for_a_commanded_off_element_is_not_charged() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 100.0f; // what the controller is still reporting
+    in.heaterEnabled = false;      // what the firmware is actually commanding
+    const auto out = estimatePower(in, silvia());
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, out.heaterW);
+    TEST_ASSERT_EQUAL_FLOAT(4.0f, out.totalW); // standby alone
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, out.heaterDutyPercent);
+}
+
+// And it says so rather than quietly presenting the corrected figure: the disagreement is a fault in the link, worth
+// surfacing, not a reading to smooth over.
+void test_an_ignored_duty_is_reported_as_ignored() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 37.0f;
+    in.heaterEnabled = false;
+    TEST_ASSERT_TRUE(estimatePower(in, silvia()).heaterReportIgnored);
+}
+
+// Commanded off and reporting zero is the ordinary case -- an element that has been off long enough for something to
+// overwrite the stale figure, or firmware that zeroes it. Nothing to flag.
+void test_a_commanded_off_element_reporting_zero_is_not_a_fault() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 0.0f;
+    in.heaterEnabled = false;
+    TEST_ASSERT_FALSE(estimatePower(in, silvia()).heaterReportIgnored);
+}
+
+// With a setpoint commanded the reported duty is believed at face value, which is the whole point: the controller is
+// the only thing that knows what the PID did inside the last window.
+void test_an_enabled_element_is_charged_what_it_reports() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 40.0f;
+    in.heaterEnabled = true;
+    const auto out = estimatePower(in, silvia());
+    TEST_ASSERT_EQUAL_FLOAT(360.0f, out.heaterW);
+    TEST_ASSERT_EQUAL_FLOAT(40.0f, out.heaterDutyPercent);
+    TEST_ASSERT_FALSE(out.heaterReportIgnored);
+}
+
+// The charged duty is the clamped one, so it can be printed beside the watts without the two disagreeing.
+void test_the_charged_duty_is_the_clamped_duty() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 140.0f;
+    const auto out = estimatePower(in, silvia());
+    TEST_ASSERT_EQUAL_FLOAT(100.0f, out.heaterDutyPercent);
+    TEST_ASSERT_EQUAL_FLOAT(900.0f, out.heaterW);
+}
+
+// Defaults stay as they were: a caller that knows nothing about the command believes the duty. Keeping the old
+// behaviour the default means this rule cannot silently zero an estimate somewhere that was never updated.
+void test_the_default_believes_the_reported_duty() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 50.0f;
+    TEST_ASSERT_EQUAL_FLOAT(450.0f, estimatePower(in, silvia()).heaterW);
+}
+
+// The rule is about the element only. The pump's drive is commanded by this same firmware, so there is no second
+// party to disagree with and no equivalent gate.
+void test_the_rule_leaves_the_pump_alone() {
+    PowerEstimateInputs in;
+    in.heaterDutyPercent = 100.0f;
+    in.heaterEnabled = false;
+    in.pumpPowerPercent = 100.0f;
+    TEST_ASSERT_EQUAL_FLOAT(59.0f, estimatePower(in, silvia()).pumpW);
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_idle_draws_standby_only);
@@ -255,6 +330,13 @@ int main() {
     RUN_TEST(test_pump_curve_bends_the_estimate);
     RUN_TEST(test_duties_are_clamped);
     RUN_TEST(test_alt_relay_is_counted);
+    RUN_TEST(test_a_duty_reported_for_a_commanded_off_element_is_not_charged);
+    RUN_TEST(test_an_ignored_duty_is_reported_as_ignored);
+    RUN_TEST(test_a_commanded_off_element_reporting_zero_is_not_a_fault);
+    RUN_TEST(test_an_enabled_element_is_charged_what_it_reports);
+    RUN_TEST(test_the_charged_duty_is_the_clamped_duty);
+    RUN_TEST(test_the_default_believes_the_reported_duty);
+    RUN_TEST(test_the_rule_leaves_the_pump_alone);
     RUN_TEST(test_accumulates_energy);
     RUN_TEST(test_energy_uses_the_interval_average);
     RUN_TEST(test_energy_ignores_bad_intervals);

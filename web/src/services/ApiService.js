@@ -234,8 +234,23 @@ export default class ApiService {
     map('mt', 'modelTemperature', v => v ?? 0);
     map('mbt', 'modelBoilerTemperature', v => v ?? 0);
     map('mnp', 'modelNetPower', v => v ?? 0);
+    // Whether the model has state. The two temperatures above are 0 when it does not, and 0 is also a temperature, so
+    // a client cannot tell the two apart without this.
+    map('mr', 'modelRunning', v => !!v);
     map('ew', 'estimatedPower', v => v ?? 0);
+    map('ehw', 'estimatedHeaterPower', v => v ?? 0);
+    map('epw', 'estimatedPumpPower', v => v ?? 0);
+    map('eow', 'estimatedOtherPower', v => v ?? 0);
     map('ewh', 'estimatedEnergyWh', v => v ?? 0);
+    // The commands in force, beside the figures the controller board reported back. hdu is the duty the estimate
+    // charged for; heaterReportIgnored says a duty was reported for an element that is commanded off, which is a
+    // stale figure rather than a reading.
+    map('bsp', 'commandedBoilerSetpoint', v => v ?? 0);
+    map('ppc', 'commandedPumpPower', v => v ?? 0);
+    map('vo', 'brewValveOpen', v => !!v);
+    map('hdu', 'estimatedHeaterDuty', v => v ?? 0);
+    map('hri', 'heaterReportIgnored', v => !!v);
+    map('wp', 'waterPumped', v => v ?? 0);
     map('trd', 'thermalRecoveryDebt', v => v ?? 0);
     map('tro', 'thermalRecoveryOffset', v => v ?? 0);
     map('tbo', 'thermalBankOffset', v => v ?? 0);
@@ -319,6 +334,16 @@ export const createMachineState = () =>
       targetSteamTemperature: 0,
       currentFlow: 0,
       modelTemperature: 0,
+      modelRunning: false,
+      estimatedHeaterPower: 0,
+      estimatedPumpPower: 0,
+      estimatedOtherPower: 0,
+      commandedBoilerSetpoint: 0,
+      commandedPumpPower: 0,
+      brewValveOpen: false,
+      estimatedHeaterDuty: 0,
+      heaterReportIgnored: false,
+      waterPumped: 0,
       modelBoilerTemperature: 0,
       modelNetPower: 0,
       estimatedPower: 0,

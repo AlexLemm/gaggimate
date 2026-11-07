@@ -2,9 +2,16 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 import { FeatureStatus } from './experimental/FeatureStatus.jsx';
+import { CommandsTable } from './experimental/CommandsTable.jsx';
 import { ModelTraceChart } from './experimental/ModelTraceChart.jsx';
 import { PowerPanel } from './experimental/PowerPanel.jsx';
-import { BLOCKER, featureState, heaterWatts, num, thermalBlocker } from './experimental/thermalModel.js';
+import {
+  BLOCKER,
+  featureState,
+  heaterWatts,
+  num,
+  thermalBlocker,
+} from './experimental/thermalModel.js';
 
 // Settings that change how the machine heats, kept apart from Machine so they are not adjusted in passing. Each one
 // here is reversible from this page alone: setting a cap back to 0 restores the previous behaviour exactly.
@@ -85,11 +92,11 @@ export function ExperimentalTab({ formData, onChange }) {
         <div className='space-y-3'>
           <p className='text-base-content/70 text-sm'>
             <Trans>
-              The firmware runs the same boiler model the compensations reason about alongside the real
-              boiler, stepped from its own state and never corrected from the sensor. Where the traces
-              part company, the model's parameters are wrong — and since the bank and the recovery size
-              themselves from those parameters, a model that runs hot and a bank that comes out too
-              large are the same fact seen twice.
+              The firmware runs the same boiler model the compensations reason about alongside the
+              real boiler, stepped from its own state and never corrected from the sensor. Where the
+              traces part company, the model's parameters are wrong — and since the bank and the
+              recovery size themselves from those parameters, a model that runs hot and a bank that
+              comes out too large are the same fact seen twice.
             </Trans>
           </p>
           <p className='text-base-content/70 text-sm'>
@@ -105,6 +112,21 @@ export function ExperimentalTab({ formData, onChange }) {
 
       <Section title={t`Power`} className='h-full lg:col-span-2'>
         <PowerPanel />
+      </Section>
+
+      <Section title={t`Commands and estimates`} className='h-full lg:col-span-2'>
+        <div className='space-y-3'>
+          <p className='text-base-content/70 text-sm'>
+            <Trans>
+              The display commands a setpoint and a pump drive; the controller board runs the PID
+              and reports a duty back; the estimate turns that duty into watts against ratings
+              measured at the plug. Three separate claims, shown side by side, because the failures
+              worth catching are the ones where they disagree — a duty reported for an element that
+              has been told to stop reads as full power until you can see the command next to it.
+            </Trans>
+          </p>
+          <CommandsTable />
+        </div>
       </Section>
 
       <Section title={t`Pre-Shot Thermal Bank`} className='h-full'>

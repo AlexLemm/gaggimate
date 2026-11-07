@@ -60,11 +60,21 @@ msgstr "{0, plural, one {# Shot} other {# Shots}}"
 msgid "{0} kJ of measured debt outstanding"
 msgstr ""
 
+#. placeholder {0}: flow.toFixed(2)
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "{0} ml/s through the pump"
+msgstr ""
+
 #. placeholder {0}: Math.round(watts)
 #. placeholder {1}: Math.round(capacity)
 #. placeholder {2}: Math.round(num(formData.inletWaterTemp))
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
 msgid "{0} W element, {1} J/K boiler, {2} °C inlet water."
+msgstr ""
+
+#. placeholder {0}: energyWh.toFixed(1)
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "{0} Wh since boot, idle included"
 msgstr ""
 
 #: src/pages/Statistics/components/toolbar/helpers.js
@@ -581,6 +591,10 @@ msgstr "Bluetooth-Geräte"
 msgid "Board"
 msgstr ""
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Board, display and the valve while it is open. Not measured — large enough that leaving it out makes an idle machine read 0 W."
+msgstr ""
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Boiler bei {temperature} °C"
@@ -648,6 +662,10 @@ msgstr "Bezugsfortschritt – {windowSeconds}s-Ansicht"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Brew Status Display"
 msgstr "Bezugsstatusanzeige"
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Brew valve"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 #: src/pages/ShotHistory/HistoryCard.jsx
@@ -755,6 +773,11 @@ msgstr "Canvas-Export wird in dieser Umgebung nicht unterstützt."
 msgid "celsius"
 msgstr "Celsius"
 
+#. placeholder {0}: chargedDuty.toFixed(1)
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Charged at {0} %"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
 msgid "Chart & Metrics"
 msgstr "Diagramm & Metriken"
@@ -821,6 +844,10 @@ msgstr "Vollanzeige schließen"
 msgid "Close library"
 msgstr "Bibliothek schließen"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "closed"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "valve state"
@@ -872,6 +899,14 @@ msgstr "Statistik-Werkzeugleiste einklappen"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Column Spacing"
 msgstr "Spaltenabstand"
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Commanded"
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "Commands and estimates"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Commutation Gain"
@@ -1530,6 +1565,10 @@ msgstr "Zeitraumfilter bearbeiten"
 msgid "Edit profile"
 msgstr "Profil bearbeiten"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Element"
+msgstr ""
+
 #. placeholder {0}: heaterDuty.toFixed(0)
 #: src/pages/Settings/tabs/experimental/PowerPanel.jsx
 msgid "Element at {0} %"
@@ -1590,6 +1629,10 @@ msgstr "Aktiviert den Kompaktmodus für dieses Panel"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "End date"
 msgstr "Enddatum"
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Energy debt"
+msgstr ""
 
 #: src/pages/Settings/tabs/experimental/PowerPanel.jsx
 msgid "Energy since boot"
@@ -1659,12 +1702,16 @@ msgstr "Fehler: {message}"
 msgid "Errors"
 msgstr "Fehler"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Estimated"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/ResultsPanel.jsx
 msgid "estimated flow"
 msgstr "geschätzter Durchfluss"
 
 #: src/pages/Settings/tabs/experimental/PowerPanel.jsx
-msgid "Estimated from the duties the firmware commands and the ratings measured at the plug, not from a current sensor. The element is 94 % of a full-load draw and its duty is known exactly, so the total is good to a few per cent; the pump term is a linear approximation worth 59 W at most."
+msgid "Estimated from the duties the firmware commands and the ratings measured at the plug, not from a current sensor. The element is 94 % of a full-load draw and its duty is known rather than modelled, so the total is good to a few per cent; the pump term is a linear approximation worth 59 W at most. It is known by the controller board, though, not here — the table below puts it beside the command, which is the only way to see the two disagree."
 msgstr ""
 
 #: src/utils/metricDefinitions.js
@@ -2381,6 +2428,10 @@ msgstr "Ein größeres Alpha reagiert schneller mit weniger Glättung; ein klein
 msgid "Last Row Fill"
 msgstr "Füllung der letzten Zeile"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Last shot"
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Last used profile"
 msgstr "Zuletzt verwendetes Profil"
@@ -2673,6 +2724,10 @@ msgstr "Maximale Pumpenleistung (0 - 1)"
 
 #: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
 msgid "Measured"
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Measured: flow times the rise from inlet to setpoint, less what the element has put back. Outstanding, so recovery is still asking."
 msgstr ""
 
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
@@ -3001,6 +3056,10 @@ msgstr "Kein unterstützter Videorecorder für den Replay-Export gefunden."
 msgid "No Targets"
 msgstr "Keine Ziele"
 
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "No telemetry yet. The chart fills as status frames arrive from the machine."
+msgstr ""
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "No timestamp available"
 msgstr "Kein Zeitstempel verfügbar"
@@ -3069,6 +3128,10 @@ msgstr "Benachrichtigungen sind blockiert. Erlaube sie für GaggiMate in den Ein
 msgid "Now Brewing"
 msgstr "Bezug läuft"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "off"
+msgstr ""
+
 #: src/pages/Settings/tabs/experimental/FeatureStatus.jsx
 msgid "Off"
 msgstr ""
@@ -3079,6 +3142,7 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "Aus"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
 #: src/pages/Settings/tabs/experimental/PowerPanel.jsx
 msgid "Offset applied"
 msgstr ""
@@ -3114,6 +3178,10 @@ msgstr "Im Profilfeld können nur Profildateien importiert werden."
 #: src/pages/ShotAnalyzer/components/library/libraryImport.js
 msgid "Only shot files can be imported in the shot field."
 msgstr "Im Shot-Feld können nur Shot-Dateien importiert werden."
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "open"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3186,6 +3254,10 @@ msgstr "ODER"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Or every"
 msgstr "Oder alle"
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Other"
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Pack to top"
@@ -3679,6 +3751,10 @@ msgstr "Puck-Widerstand"
 msgid "Puck Resistance (s·√bar/mL)"
 msgstr "Puck-Widerstand (s·√bar/mL)"
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Pump"
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pump Assist Cutoff"
 msgstr "Abschaltung der Pumpenunterstützung"
@@ -3902,6 +3978,10 @@ msgstr "Aufgezeichneter Stoppgrund"
 msgid "Recording replay..."
 msgstr "Replay wird aufgezeichnet..."
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Recovery asking"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Reference shot"
 msgstr "Referenz-Shot"
@@ -4009,6 +4089,10 @@ msgstr "Replay-Bildexport wurde abgebrochen."
 #: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
 msgid "Replay recording failed."
 msgstr "Replay-Aufzeichnung fehlgeschlagen."
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Reported"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "Reset columns to system defaults?"
@@ -4389,6 +4473,10 @@ msgstr "Einstellungen für dieses Smartphone, etwa Design und Benachrichtigungen
 #: src/pages/Settings/index.jsx
 msgid "Settings have not loaded yet."
 msgstr "Die Einstellungen wurden noch nicht geladen."
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Settled. The PID owns the temperature until the next draw."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Share"
@@ -5217,9 +5305,22 @@ msgstr "Die konfigurierte oder ermittelte Waagenverzögerung ist ungewöhnlich h
 msgid "The connection was lost during the upload. The machine kept its current firmware."
 msgstr ""
 
+#. placeholder {0}: reportedDuty.toFixed(1)
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "The controller is still reporting {0} % for an element it has been told to stop. That is a duty left over from the last window it ran, not a reading, so it is charged as 0 W."
+msgstr ""
+
 #: src/app/notifications.js
 msgid "The controller reported an error."
 msgstr "Der Controller hat einen Fehler gemeldet."
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "The debt expressed as boiler temperature, capped by Max Thermal Recovery and by the 100 °C ceiling."
+msgstr ""
+
+#: src/pages/Settings/tabs/ExperimentalTab.jsx
+msgid "The display commands a setpoint and a pump drive; the controller board runs the PID and reports a duty back; the estimate turns that duty into watts against ratings measured at the plug. Three separate claims, shown side by side, because the failures worth catching are the ones where they disagree — a duty reported for an element that has been told to stop reads as full power until you can see the command next to it."
+msgstr ""
 
 #: src/pages/Settings/index.jsx
 msgid "The file contains no known settings."
@@ -5245,12 +5346,20 @@ msgstr "Folgende Warnungen sind derzeit aktiv:"
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
 msgstr "Die Mühle erreicht GaggiMate unter dieser Adresse, daher müssen beide im selben Netzwerk sein (die E64 WS unterstützt nur 2,4 GHz) und die Adresse darf sich nicht ändern: Reserviere sie in deinem Router für GaggiMate."
 
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "The larger of recovery and the pre-shot bank, never the sum: both are a request for a boiler temperature, not an amount of energy to add."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "Die Maschine ist seit 5 Minuten im Dampfmodus."
 
 #: src/pages/Settings/tabs/FirmwareUploadSection.jsx
 msgid "The machine rejected this file."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
+msgid "The model is not running. It needs the element wattage (Kff on the Machine tab) and a boiler heat capacity; with both set it runs continuously, idle included."
 msgstr ""
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
@@ -5268,6 +5377,10 @@ msgstr "Die Waage wurde gefunden, aber die Bluetooth-Verbindung ist fehlgeschlag
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "Die Waage wurde nicht gefunden. Stelle sicher, dass sie eingeschaltet und in der Nähe ist, und suche dann erneut."
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "The solenoid is counted in Other below; the controller does not report it back."
+msgstr ""
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
@@ -5408,6 +5521,10 @@ msgstr "Gesamt"
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Duration"
 msgstr "Gesamtdauer"
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "Total now"
+msgstr ""
 
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Pumped Water"
@@ -5799,10 +5916,6 @@ msgstr "M"
 msgid "Waiting above the brew setpoint, released when the shot starts."
 msgstr ""
 
-#: src/pages/Settings/tabs/experimental/ModelTraceChart.jsx
-msgid "Waiting for the model to start. It needs the element wattage (Kff on the Machine tab) and a boiler heat capacity, then begins the moment the machine is heating."
-msgstr ""
-
 #: src/utils/warnings.js
 msgctxt "warning level"
 msgid "Warn"
@@ -5967,6 +6080,10 @@ msgstr "Mit wie viel Prozent die Pumpe beim Dampfen laufen soll"
 
 #: src/pages/Settings/tabs/ExperimentalTab.jsx
 msgid "What the pump draws at full drive, measured at the plug. Only feeds the power estimate; it changes nothing about how the machine runs. 59 W on a Rancilio Silvia."
+msgstr ""
+
+#: src/pages/Settings/tabs/experimental/CommandsTable.jsx
+msgid "What the pump model says went through. Reset when a shot starts, so between shots this is the one that just finished."
 msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx

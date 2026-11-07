@@ -1014,17 +1014,31 @@ BoilerModelParams Controller::modelParams() const {
 
 // Steps the live boiler model and the power estimate. Observers only: nothing computed here reaches a command, which
 // is what makes them safe to leave running.
-void Controller::updateObservers(const float dtS) {
+// commandedSetpointC is the boiler setpoint about to be sent, zero when the element is being commanded off. Both
+// observers need it for the same reason: currentHeaterPower arrives from the controller board and describes a window
+// that has already closed, so on its own it cannot say whether the element is running now. A controller that has been
+// told to stop cuts the relay and reports its last duty until something overwrites it -- which fed the power estimate
+// a full element and the model a full element's worth of heat, on a machine sitting in standby.
+void Controller::updateObservers(const float dtS, const float commandedSetpointC) {
     const BoilerModelParams params = modelParams();
+    const bool heaterEnabled = commandedSetpointC > 0.0f;
+    const float dutyPercent = heaterEnabled ? currentHeaterPower : 0.0f;
 
     // The real boiler temperature, not the displayed one: onTempRead takes the offset out on the way in, and the model
     // is about the temperature the metal is actually at.
     const float measuredC = currentTemp + static_cast<float>(settings.getTemperatureOffset());
-    boilerObserver.sample(dtS, measuredC, currentHeaterPower / 100.0f, currentPumpFlow, params);
+    boilerObserver.sample(dtS, measuredC, dutyPercent / 100.0f, currentPumpFlow, params);
 
     PowerEstimateInputs inputs;
     inputs.heaterDutyPercent = currentHeaterPower;
+    inputs.heaterEnabled = heaterEnabled;
     inputs.pumpPowerPercent = currentPumpPower;
+    // The brew valve's solenoid and the alt relay. lastRelay/lastAlt are the previous cycle's commands, which is the
+    // pair in force over the interval just reported; this cycle's are not built until below. There is no measurement
+    // for whatever the alt relay drives -- a grinder on one machine, a steam boiler on another -- so it contributes
+    // nothing until someone puts a figure on it, rather than a guess.
+    inputs.valveOpen = lastRelay.open;
+    inputs.altRelayOn = lastAlt;
     PowerEstimateParams powerParams;
     // Falls back to the measured default rather than zero: a machine with no Kff set still draws what it draws, and
     // reporting 0 W while the element is on would be plainly wrong.
@@ -1228,7 +1242,7 @@ void Controller::updateControl() {
     } else {
         thermalRecoveryOffset = updateThermalRecovery(dtS, 0.0f);
     }
-    updateObservers(dtS);
+    updateObservers(dtS, targetTemp);
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {

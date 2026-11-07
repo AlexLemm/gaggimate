@@ -31,7 +31,10 @@ export function PowerPanel() {
   const watts = num(status.estimatedPower);
   const energyWh = num(status.estimatedEnergyWh);
   const netW = num(status.modelNetPower);
-  const heaterDuty = num(status.currentBoilerPower);
+  // The duty the estimate charged for, not the one the controller reported: with no setpoint commanded those differ,
+  // and printing the reported figure beside watts computed from the other is how a standing-by machine came to
+  // advertise a full element. See src/display/util/PowerEstimate.h.
+  const heaterDuty = num(status.estimatedHeaterDuty);
   const debtJ = num(status.thermalRecoveryDebt);
   const bankOffset = num(status.thermalBankOffset);
   const recoveryOffset = num(status.thermalRecoveryOffset);
@@ -41,9 +44,12 @@ export function PowerPanel() {
     <div className='space-y-3'>
       <p className='text-base-content/70 text-sm'>
         <Trans>
-          Estimated from the duties the firmware commands and the ratings measured at the plug, not from a current
-          sensor. The element is 94 % of a full-load draw and its duty is known exactly, so the total is good to a few
-          per cent; the pump term is a linear approximation worth 59 W at most.
+          Estimated from the duties the firmware commands and the ratings measured at the plug, not
+          from a current sensor. The element is 94 % of a full-load draw and its duty is known
+          rather than modelled, so the total is good to a few per cent; the pump term is a linear
+          approximation worth 59 W at most. It is known by the controller board, though, not here —
+          the table below puts it beside the command, which is the only way to see the two
+          disagree.
         </Trans>
       </p>
 

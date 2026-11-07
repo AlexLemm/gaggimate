@@ -464,11 +464,29 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["hp"] = round_to(controller->getCurrentHeaterPower(), 3);
     // Experimental observers: the live boiler model beside the measurement, and the estimated draw. Fast-path fields
     // so the dashboard can plot them against ct on one time axis.
-    statusDoc["mt"] = round_to(controller->getModelTemp(), 3);          // model sensor temperature
-    statusDoc["mbt"] = round_to(controller->getModelBoilerTemp(), 3);   // model water temperature, unmeasurable
-    statusDoc["mnp"] = round_to(controller->getModelNetPower(), 1);     // net power into the boiler, W
-    statusDoc["ew"] = round_to(controller->getEstimatedPower(), 1);     // estimated draw from the wall, W
-    statusDoc["ewh"] = round_to(controller->getEstimatedEnergyWh(), 4); // energy since boot, Wh
+    statusDoc["mt"] = round_to(controller->getModelTemp(), 3);        // model sensor temperature
+    statusDoc["mbt"] = round_to(controller->getModelBoilerTemp(), 3); // model water temperature, unmeasurable
+    statusDoc["mnp"] = round_to(controller->getModelNetPower(), 1);   // net power into the boiler, W
+    // Whether the model has state at all. mt and mbt are 0 when it does not, and 0 is also a temperature, so without
+    // this a client cannot tell a model that is not running from one reading zero -- which left the trace chart blank
+    // with nothing to say about why.
+    statusDoc["mr"] = controller->isModelRunning() ? 1 : 0;
+    statusDoc["ew"] = round_to(controller->getEstimatedPower(), 1);      // estimated draw from the wall, W
+    statusDoc["ehw"] = round_to(controller->getEstimatedHeaterPower(), 1); // element, W
+    statusDoc["epw"] = round_to(controller->getEstimatedPumpPower(), 1);   // pump, W
+    statusDoc["eow"] = round_to(controller->getEstimatedOtherPower(), 1);  // standby, valve and the alt relay, W
+    statusDoc["ewh"] = round_to(controller->getEstimatedEnergyWh(), 4);    // energy since boot, Wh
+    // The commands in force beside the figures that came back from the controller board, so a disagreement between
+    // them is visible rather than averaged into a watt figure. hdu is the duty the estimate charged for and hri says
+    // it threw away a duty reported for an element that is commanded off (see src/display/util/PowerEstimate.h).
+    statusDoc["bsp"] = round_to(controller->getCommandedBoilerSetpoint(), 2); // boiler setpoint commanded, C
+    statusDoc["ppc"] = round_to(controller->getCommandedPumpPower(), 1);      // pump drive commanded, %
+    statusDoc["vo"] = controller->isBrewValveOpen() ? 1 : 0;
+    statusDoc["hdu"] = round_to(controller->getEstimatedHeaterDuty(), 3);
+    statusDoc["hri"] = controller->isHeaterReportIgnored() ? 1 : 0;
+    // Water the pump model says has gone through since the shot started. Reset by activate(), so after a shot it is
+    // that shot's volume -- the last shot's estimate in ml, until the next one begins.
+    statusDoc["wp"] = round_to(controller->getCurrentWaterPumped(), 2);
     statusDoc["trd"] = round_to(controller->getThermalRecoveryDebt(), 1);   // outstanding recovery debt, J
     statusDoc["tro"] = round_to(controller->getThermalRecoveryOffset(), 3); // offset recovery is asking for, C
     statusDoc["tbo"] = round_to(controller->getThermalBankOffset(), 3);     // offset banking is asking for, C

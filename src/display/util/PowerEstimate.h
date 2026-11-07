@@ -8,8 +8,10 @@
 // Deliberately separate from everything else. It needs no thermal model, no PID state and no profile -- just duties
 // and ratings -- so it stays a function of its inputs and can be used, tested and changed on its own.
 //
-// HOW GOOD IS IT. The element is the whole answer to within a few per cent: it is 94 % of the full-load draw, it is
-// purely resistive, and its duty is exactly known because the firmware sets it. The pump is the soft part. A vibratory
+// HOW GOOD IS IT. The element is the whole answer to within a few per cent: it is 94 % of the full-load draw and it
+// is purely resistive. Its duty is known rather than modelled -- but known by the controller board, not here, and a
+// reported duty describes a window that has already closed. heaterEnabled below is what keeps that distinction: see
+// the comment on it, and the tests in test/test_power_estimate. The pump is the soft part. A vibratory
 // pump under phase-angle control does not draw power in proportion to its commanded percentage -- the relationship is
 // closer to the square of the conduction fraction than to a straight line -- so the linear term below is an
 // approximation worth 59 W at most. That is 6 % of full load, and the error inside it less, which is accurate enough
@@ -41,6 +43,12 @@ struct PowerEstimateParams {
 struct PowerEstimateInputs {
     float heaterDutyPercent = 0.0f; // the controller's own duty figure, 0-100
     float pumpPowerPercent = 0.0f;  // commanded pump drive, 0-100
+    // Whether a boiler setpoint above zero is being commanded. The duty above is reported by the controller board, one
+    // BLE hop away, and a reported duty is not evidence that the element is running: with no setpoint the controller
+    // cuts the relay outright, so any duty still coming back describes a window that has already closed. Believing it
+    // put a full 900 W element on the dashboard of a machine sitting in standby, and billed the energy total for it.
+    // Defaults to true so a caller that does not know stays with the reported figure.
+    bool heaterEnabled = true;
     bool valveOpen = false;
     bool altRelayOn = false; // second SSR: grinder or steam boiler, depending on configuration
     float altRelayWatts = 0.0f;
@@ -51,6 +59,12 @@ struct PowerEstimate {
     float heaterW = 0.0f;
     float pumpW = 0.0f;
     float otherW = 0.0f; // standby, valve and the alt relay
+    // The duty the estimate actually charged for, which is the reported one unless the element was commanded off.
+    float heaterDutyPercent = 0.0f;
+    // Set when a duty was reported for an element that is commanded off, so the UI can show the disagreement instead
+    // of silently presenting the corrected number. It means the controller is holding a stale figure, not that the
+    // element is on.
+    bool heaterReportIgnored = false;
 };
 
 inline float powerEstimateClampFraction(float percent) {
@@ -63,7 +77,10 @@ inline float powerEstimateClampFraction(float percent) {
 
 inline PowerEstimate estimatePower(const PowerEstimateInputs &in, const PowerEstimateParams &params) {
     PowerEstimate out;
-    out.heaterW = params.heaterWatts * powerEstimateClampFraction(in.heaterDutyPercent);
+    const float reportedDuty = powerEstimateClampFraction(in.heaterDutyPercent) * 100.0f;
+    out.heaterReportIgnored = !in.heaterEnabled && reportedDuty > 0.0f;
+    out.heaterDutyPercent = in.heaterEnabled ? reportedDuty : 0.0f;
+    out.heaterW = params.heaterWatts * out.heaterDutyPercent / 100.0f;
 
     const float pumpFraction = powerEstimateClampFraction(in.pumpPowerPercent);
     // Avoid pow() for the common linear case: this runs on every telemetry frame on an ESP32.
